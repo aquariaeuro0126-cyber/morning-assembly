@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>朝の会</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========== スタート画面 ========== -->
+  <div id="screen-start" class="screen active">
+    <div class="start-inner">
+      <div class="start-icon">🌅</div>
+      <h1 class="start-title">朝の会</h1>
+      <p class="start-subtitle">今日も元気にはじめよう！</p>
+      <button id="btn-start" class="btn-main">はじめる</button>
+    </div>
+    <!-- 管理画面への隠しトリガー（ロゴを3回タップ） -->
+    <div id="admin-trigger" class="admin-trigger"></div>
+  </div>
+
+  <!-- ========== メイン画面 ========== -->
+  <div id="screen-main" class="screen">
+    <div class="main-layout">
+
+      <!-- 左：垂直タブ -->
+      <nav class="sidebar">
+        <div class="sidebar-title">朝の会</div>
+        <ul class="tab-list" id="tab-list">
+          <li class="tab-item active" data-index="0">
+            <span class="tab-num">①</span>
+            <span class="tab-label">号令</span>
+          </li>
+          <li class="tab-item" data-index="1">
+            <span class="tab-num">②</span>
+            <span class="tab-label">挨拶</span>
+          </li>
+          <li class="tab-item" data-index="2">
+            <span class="tab-num">③</span>
+            <span class="tab-label">日付・天気</span>
+          </li>
+          <li class="tab-item" data-index="3">
+            <span class="tab-num">④</span>
+            <span class="tab-label">出席</span>
+          </li>
+          <li class="tab-item" data-index="4">
+            <span class="tab-num">⑤</span>
+            <span class="tab-label">給食</span>
+          </li>
+          <li class="tab-item" data-index="5">
+            <span class="tab-num">⑥</span>
+            <span class="tab-label">歌</span>
+          </li>
+          <li class="tab-item" data-index="6">
+            <span class="tab-num">⑦</span>
+            <span class="tab-label">日直の話</span>
+          </li>
+          <li class="tab-item" data-index="7">
+            <span class="tab-num">⑧</span>
+            <span class="tab-label">先生の話</span>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- 右：ミニアプリ表示エリア -->
+      <main class="content-area">
+        <div class="mini-app-container" id="mini-app-container">
+
+          <!-- ① 号令 -->
+          <div class="mini-app active" data-index="0">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">🔔</span>
+              <h2>号令</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「これから朝の会を始めます。」</p>
+            </div>
+          </div>
+
+          <!-- ② 挨拶 -->
+          <div class="mini-app" data-index="1">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">👋</span>
+              <h2>挨拶</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「挨拶です。立ちましょう。」</p>
+              <div class="greeting-box">
+                <p class="greeting-text">おはようございます！</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ 日付・曜日・天気 -->
+          <div class="mini-app" data-index="2">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">📅</span>
+              <h2>日付・曜日・天気</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「日付・曜日・天気です。」</p>
+              <div class="date-weather-box" id="date-weather-box">
+                <p class="date-text" id="date-text">読み込み中...</p>
+                <p class="weather-text" id="weather-text">天気：--</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ④ 出席 -->
+          <div class="mini-app" data-index="3">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">📋</span>
+              <h2>出席</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「出席をとります。」</p>
+              <div class="placeholder-box">
+                <p>出席ミニアプリ（開発予定）</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑤ 給食 -->
+          <div class="mini-app" data-index="4">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">🍱</span>
+              <h2>給食</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「給食です。今日の献立は…」</p>
+              <div class="placeholder-box">
+                <p>給食ミニアプリ（開発予定）</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑥ 歌 -->
+          <div class="mini-app" data-index="5">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">🎵</span>
+              <h2>歌</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「歌です。歌を歌います。立ちましょう。」</p>
+              <div class="placeholder-box">
+                <p>歌ミニアプリ（開発予定）</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑦ 日直の話 -->
+          <div class="mini-app" data-index="6">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">🗣️</span>
+              <h2>日直の話</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「日直の話です。」</p>
+              <div class="placeholder-box">
+                <p>日直の話ミニアプリ（開発予定）</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑧ 先生の話 -->
+          <div class="mini-app" data-index="7">
+            <div class="mini-app-header">
+              <span class="mini-app-icon">👩‍🏫</span>
+              <h2>先生の話</h2>
+            </div>
+            <div class="mini-app-body">
+              <p class="script-text">「先生の話です。先生お願いします。」</p>
+              <div class="placeholder-box">
+                <p>先生の話ミニアプリ（開発予定）</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ナビゲーションボタン -->
+        <div class="nav-buttons">
+          <button id="btn-prev" class="btn-nav btn-prev" disabled>◀ もどる</button>
+          <div class="progress-dots" id="progress-dots"></div>
+          <button id="btn-next" class="btn-nav btn-next">つぎへ ▶</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== 終了画面 ========== -->
+  <div id="screen-end" class="screen">
+    <div class="end-inner">
+      <div class="end-icon">🌟</div>
+      <h1 class="end-title">朝の会おわり！</h1>
+      <p class="end-subtitle">今日も一日がんばろう！</p>
+      <div class="countdown-bar">
+        <div class="countdown-fill" id="countdown-fill"></div>
+      </div>
+      <p class="countdown-text" id="countdown-text">10秒後にトップにもどります</p>
+      <button id="btn-back-start" class="btn-main">トップにもどる</button>
+    </div>
+  </div>
+
+  <!-- ========== 管理画面パスワードモーダル ========== -->
+  <div id="modal-admin" class="modal hidden">
+    <div class="modal-inner">
+      <h2 class="modal-title">🔐 管理画面</h2>
+      <p class="modal-desc">パスワードを入力してください</p>
+      <input type="password" id="admin-password-input" class="modal-input" placeholder="パスワード" />
+      <div class="modal-buttons">
+        <button id="btn-admin-cancel" class="btn-secondary">キャンセル</button>
+        <button id="btn-admin-enter" class="btn-main btn-small">入る</button>
+      </div>
+      <p class="modal-error hidden" id="modal-error">パスワードが違います</p>
+    </div>
+  </div>
+
+  <!-- ========== 管理画面 ========== -->
+  <div id="screen-admin" class="screen">
+    <div class="admin-layout">
+      <div class="admin-header">
+        <h1>⚙️ 管理画面</h1>
+        <button id="btn-admin-close" class="btn-secondary">閉じる</button>
+      </div>
+      <div class="admin-body">
+        <p class="admin-placeholder">管理機能（順次追加予定）</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
