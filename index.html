@@ -351,9 +351,56 @@
               <h2>歌</h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「歌です。歌を歌います。立ちましょう。」</p>
-              <div class="placeholder-box">
-                <p>歌ミニアプリ（開発予定）</p>
+              <p class="script-text">「歌です。立ちましょう。」</p>
+
+              <div class="song-area">
+
+                <!-- フェーズ①：スタート -->
+                <div class="song-phase" id="song-phase-ready">
+                  <p class="song-guide">今月の歌を歌おう！<br>くじ引きをして、どの歌を歌うか決めよう！</p>
+                  <div class="song-this-month" id="song-this-month-label">📀 今月の歌：読み込み中...</div>
+                  <button id="btn-song-lottery" class="btn-song-lottery">🎫 くじを引く！</button>
+                  <p class="song-no-data hidden" id="song-no-data">⚠️ 管理画面で歌を登録してください</p>
+                </div>
+
+                <!-- フェーズ②：くじ引きアニメーション -->
+                <div class="song-phase hidden" id="song-phase-lottery">
+                  <p class="song-guide">くじを引いています…</p>
+                  <div class="lottery-box" id="lottery-box">
+                    <div class="lottery-icon" id="lottery-icon">🎫</div>
+                    <div class="lottery-shake-text" id="lottery-shake-text">？？？</div>
+                  </div>
+                  <div class="lottery-result hidden" id="lottery-result">
+                    <div class="lottery-result-badge" id="lottery-result-badge"></div>
+                    <div class="lottery-result-text" id="lottery-result-text"></div>
+                  </div>
+                  <button id="btn-song-lottery-next" class="btn-song-start hidden" id="btn-song-lottery-next">歌いにいく ▶</button>
+                </div>
+
+                <!-- フェーズ③：好きな曲を選ぶ（当たりのとき） -->
+                <div class="song-phase hidden" id="song-phase-select">
+                  <p class="song-guide">🎉 当たり！好きな歌をえらぼう！</p>
+                  <div class="song-select-list" id="song-select-list">
+                    <!-- JS で動的生成 -->
+                  </div>
+                </div>
+
+                <!-- フェーズ④：歌を再生 -->
+                <div class="song-phase hidden" id="song-phase-play">
+                  <div class="song-now-playing">
+                    <div class="song-now-label">♪ 今歌う歌</div>
+                    <div class="song-now-title" id="song-now-title">タイトル</div>
+                  </div>
+                  <div class="song-player-wrap">
+                    <div id="song-youtube-player"></div>
+                  </div>
+                  <div class="song-lyrics-wrap" id="song-lyrics-wrap">
+                    <div class="song-lyrics-title">歌詞</div>
+                    <div class="song-lyrics-body" id="song-lyrics-body"></div>
+                  </div>
+                  <button id="btn-song-retry" class="btn-secondary">もう一度</button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -460,6 +507,64 @@
           </div>
         </section>
 
+        <!-- 歌：設定管理 -->
+        <section class="admin-section">
+          <h2 class="admin-section-title">🎵 歌 — 設定管理</h2>
+          <p class="admin-section-desc">今月の歌・好きな曲リスト・当たり枠数を登録します。</p>
+
+          <!-- 今月の歌 -->
+          <div class="admin-song-block">
+            <h3 class="admin-song-block-title">📀 今月の歌</h3>
+            <div class="admin-song-field-row">
+              <label class="admin-song-label">タイトル</label>
+              <input type="text" id="admin-song-monthly-title" class="admin-song-input" placeholder="例：翼をください" maxlength="50" />
+            </div>
+            <div class="admin-song-field-row">
+              <label class="admin-song-label">YouTube URL</label>
+              <input type="text" id="admin-song-monthly-url" class="admin-song-input" placeholder="https://www.youtube.com/watch?v=..." maxlength="200" />
+            </div>
+            <div class="admin-song-field-row admin-song-field-col">
+              <label class="admin-song-label">歌詞（省略可）</label>
+              <textarea id="admin-song-monthly-lyrics" class="admin-song-textarea" placeholder="歌詞を入力（改行OK）" rows="5"></textarea>
+            </div>
+            <button id="btn-admin-song-monthly-save" class="btn-admin-add">保存</button>
+            <p class="admin-song-saved hidden" id="admin-song-monthly-saved">✅ 保存しました</p>
+          </div>
+
+          <!-- 当たり枠数 -->
+          <div class="admin-song-block">
+            <h3 class="admin-song-block-title">🎯 くじ引き当たり枠数</h3>
+            <p class="admin-section-desc">くじ全体（10枚）のうち何枚を「当たり」にするか設定します。</p>
+            <div class="admin-song-field-row">
+              <label class="admin-song-label">当たり枚数（1〜9）</label>
+              <input type="number" id="admin-song-win-count" class="admin-song-input-sm" min="1" max="9" value="3" />
+              <span class="admin-song-unit">枚 / 10枚</span>
+            </div>
+            <button id="btn-admin-song-win-save" class="btn-admin-add">保存</button>
+            <p class="admin-song-saved hidden" id="admin-song-win-saved">✅ 保存しました</p>
+          </div>
+
+          <!-- 好きな曲リスト -->
+          <div class="admin-song-block">
+            <h3 class="admin-song-block-title">⭐ 好きな曲リスト（当たり時に選べる）</h3>
+            <div class="admin-song-fav-form">
+              <input type="text" id="admin-song-fav-title" class="admin-song-input" placeholder="曲タイトル" maxlength="50" />
+              <input type="text" id="admin-song-fav-url" class="admin-song-input" placeholder="YouTube URL" maxlength="200" />
+              <textarea id="admin-song-fav-lyrics" class="admin-song-textarea" placeholder="歌詞（省略可）" rows="3"></textarea>
+              <button id="btn-admin-song-fav-add" class="btn-admin-add">追加</button>
+              <p class="admin-song-error hidden" id="admin-song-fav-error">タイトルとURLを入力してください</p>
+            </div>
+            <div class="admin-song-fav-list-wrap">
+              <div class="admin-song-fav-list-header">
+                <span id="admin-song-fav-count">0曲登録中</span>
+              </div>
+              <ul class="admin-song-fav-list" id="admin-song-fav-list">
+                <li class="admin-name-empty" id="admin-song-fav-empty">まだ曲が登録されていません</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <!-- 出席：名簿管理 -->
         <section class="admin-section">
           <h2 class="admin-section-title">📋 出席 — 名簿管理</h2>
@@ -489,6 +594,8 @@
     </div>
   </div>
 
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="script.js"></script>
 </body>
 </html>

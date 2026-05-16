@@ -1324,6 +1324,397 @@ function initAdminKyushoku() {
 }
 
 // ----------------------------------------
+// ⑥ 歌ミニアプリ
+// ----------------------------------------
+
+// YouTube IFrame API が読み込まれたときに呼ばれるコールバック
+// （API側から自動で呼び出されるためグローバルに定義する必要がある）
+let ytPlayer = null;
+let ytPlayerReady = false;
+
+window.onYouTubeIframeAPIReady = function() {
+  ytPlayerReady = true;
+};
+
+function extractYouTubeId(url) {
+  if (!url) return null;
+  // youtu.be/XXXX または watch?v=XXXX または embed/XXXX 形式に対応
+  const patterns = [
+    /youtu\.be\/([A-Za-z0-9_\-]{11})/,
+    /[?&]v=([A-Za-z0-9_\-]{11})/,
+    /embed\/([A-Za-z0-9_\-]{11})/
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function initSong() {
+  const STORAGE_KEY_MONTHLY = 'songMonthly';
+  const STORAGE_KEY_FAV     = 'songFavList';
+  const STORAGE_KEY_WIN     = 'songWinCount';
+  const LOTTERY_TOTAL       = 10; // くじの総枚数
+
+  // --- DOM 取得 ---
+  const phaseReady   = document.getElementById('song-phase-ready');
+  const phaseLottery = document.getElementById('song-phase-lottery');
+  const phaseSelect  = document.getElementById('song-phase-select');
+  const phasePlay    = document.getElementById('song-phase-play');
+
+  const thisMonthLabel  = document.getElementById('song-this-month-label');
+  const btnLottery      = document.getElementById('btn-song-lottery');
+  const noDataMsg       = document.getElementById('song-no-data');
+
+  const lotteryBox      = document.getElementById('lottery-box');
+  const lotteryIcon     = document.getElementById('lottery-icon');
+  const lotteryShakeText = document.getElementById('lottery-shake-text');
+  const lotteryResult   = document.getElementById('lottery-result');
+  const lotteryResultBadge = document.getElementById('lottery-result-badge');
+  const lotteryResultText  = document.getElementById('lottery-result-text');
+  const btnLotteryNext  = document.getElementById('btn-song-lottery-next');
+
+  const songSelectList  = document.getElementById('song-select-list');
+  const songNowTitle    = document.getElementById('song-now-title');
+  const songLyricsWrap  = document.getElementById('song-lyrics-wrap');
+  const songLyricsBody  = document.getElementById('song-lyrics-body');
+  const btnSongRetry    = document.getElementById('btn-song-retry');
+
+  if (!phaseReady) return;
+
+  // --- データ読み込み ---
+  function loadMonthly() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY)) || null; }
+    catch { return null; }
+  }
+  function loadFavList() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_FAV)) || []; }
+    catch { return []; }
+  }
+  function loadWinCount() {
+    const v = parseInt(localStorage.getItem(STORAGE_KEY_WIN));
+    return (!isNaN(v) && v >= 1 && v <= 9) ? v : 3;
+  }
+
+  // --- フェーズ切り替え ---
+  function showSongPhase(phase) {
+    [phaseReady, phaseLottery, phaseSelect, phasePlay].forEach(p => {
+      if (p) p.classList.add('hidden');
+    });
+    if (phase) phase.classList.remove('hidden');
+  }
+
+  // --- スタート画面を更新 ---
+  function refreshReady() {
+    const monthly = loadMonthly();
+    if (!monthly || !monthly.title || !monthly.url) {
+      thisMonthLabel.textContent = '📀 今月の歌：未登録';
+      btnLottery.disabled = true;
+      noDataMsg.classList.remove('hidden');
+    } else {
+      thisMonthLabel.textContent = `📀 今月の歌：${monthly.title}`;
+      btnLottery.disabled = false;
+      noDataMsg.classList.add('hidden');
+    }
+  }
+
+  // --- くじ引き実行 ---
+  btnLottery.addEventListener('click', () => {
+    showSongPhase(phaseLottery);
+
+    // アニメーション中はボックスをシェイク
+    lotteryBox.style.animation = 'lotteryShake 0.4s ease infinite';
+    lotteryIcon.textContent = '🎫';
+    lotteryShakeText.textContent = '？？？';
+    lotteryResult.classList.add('hidden');
+    btnLotteryNext.classList.add('hidden');
+
+    // 1.5秒後に結果を表示
+    setTimeout(() => {
+      const winCount = loadWinCount();
+      const isWin    = Math.random() < (winCount / LOTTERY_TOTAL);
+
+      // アニメーション停止
+      lotteryBox.style.animation = 'none';
+
+      if (isWin) {
+        lotteryIcon.textContent    = '🎊';
+        lotteryShakeText.textContent = '当たり！！';
+        lotteryResultBadge.textContent = '🎉';
+        lotteryResultText.textContent  = '好きな歌を選んでいいよ！';
+
+        lotteryResult.classList.remove('hidden');
+        btnLotteryNext.textContent = '曲をえらぶ ▶';
+        btnLotteryNext.classList.remove('hidden');
+        btnLotteryNext.dataset.result = 'win';
+      } else {
+        lotteryIcon.textContent    = '😢';
+        lotteryShakeText.textContent = 'はずれ…';
+        lotteryResultBadge.textContent = '📀';
+        lotteryResultText.textContent  = '今月の歌を歌おう！';
+
+        lotteryResult.classList.remove('hidden');
+        btnLotteryNext.textContent = '歌いにいく ▶';
+        btnLotteryNext.classList.remove('hidden');
+        btnLotteryNext.dataset.result = 'lose';
+      }
+    }, 1500);
+  });
+
+  // --- くじ結果の「次へ」 ---
+  btnLotteryNext.addEventListener('click', () => {
+    const result = btnLotteryNext.dataset.result;
+    if (result === 'win') {
+      // 当たり → 好きな曲一覧へ
+      const favList = loadFavList();
+      if (favList.length === 0) {
+        // 好きな曲が未登録の場合は今月の歌へ
+        playSong(loadMonthly());
+        return;
+      }
+      buildSelectList(favList);
+      showSongPhase(phaseSelect);
+    } else {
+      // はずれ → 今月の歌を再生
+      playSong(loadMonthly());
+    }
+  });
+
+  // --- 好きな曲選択リストを構築 ---
+  function buildSelectList(favList) {
+    songSelectList.innerHTML = '';
+    favList.forEach(song => {
+      const btn = document.createElement('button');
+      btn.className = 'song-select-btn';
+      btn.innerHTML = `🎵 <span>${song.title}</span>`;
+      btn.addEventListener('click', () => playSong(song));
+      songSelectList.appendChild(btn);
+    });
+  }
+
+  // --- 歌を再生するフェーズへ ---
+  function playSong(song) {
+    if (!song) return;
+    songNowTitle.textContent = song.title;
+
+    // 歌詞
+    if (song.lyrics && song.lyrics.trim()) {
+      songLyricsBody.textContent = song.lyrics;
+      songLyricsWrap.classList.remove('hidden');
+    } else {
+      songLyricsWrap.classList.add('hidden');
+    }
+
+    // YouTube 埋め込み
+    const videoId = extractYouTubeId(song.url);
+    const playerEl = document.getElementById('song-youtube-player');
+    if (videoId && playerEl) {
+      if (ytPlayer) {
+        ytPlayer.destroy();
+        ytPlayer = null;
+      }
+      if (ytPlayerReady) {
+        // YouTube API が読み込み済み
+        ytPlayer = new YT.Player('song-youtube-player', {
+          height: '315',
+          width:  '100%',
+          videoId: videoId,
+          playerVars: { rel: 0, modestbranding: 1 }
+        });
+      } else {
+        // フォールバック：iframe を直接埋め込む
+        playerEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" width="100%" height="315" allowfullscreen></iframe>`;
+      }
+    } else {
+      const playerEl2 = document.getElementById('song-youtube-player');
+      if (playerEl2) playerEl2.innerHTML = '<p style="text-align:center;padding:40px;color:#b0bec5;">動画URLが設定されていません</p>';
+    }
+
+    showSongPhase(phasePlay);
+  }
+
+  // --- 「もう一度」ボタン ---
+  btnSongRetry.addEventListener('click', () => {
+    // YouTube プレーヤーを停止・破棄
+    if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+      ytPlayer.stopVideo();
+      ytPlayer.destroy();
+      ytPlayer = null;
+    }
+    // iframe フォールバックも破棄
+    const playerEl = document.getElementById('song-youtube-player');
+    if (playerEl) playerEl.innerHTML = '';
+
+    refreshReady();
+    showSongPhase(phaseReady);
+  });
+
+  // 管理画面変更を反映
+  document.addEventListener('song-updated', refreshReady);
+
+  // 初回表示
+  refreshReady();
+}
+
+// ----------------------------------------
+// 管理画面 — 歌設定管理
+// ----------------------------------------
+function initAdminSong() {
+  const STORAGE_KEY_MONTHLY = 'songMonthly';
+  const STORAGE_KEY_FAV     = 'songFavList';
+  const STORAGE_KEY_WIN     = 'songWinCount';
+
+  // --- DOM 取得 ---
+  const monthlyTitle  = document.getElementById('admin-song-monthly-title');
+  const monthlyUrl    = document.getElementById('admin-song-monthly-url');
+  const monthlyLyrics = document.getElementById('admin-song-monthly-lyrics');
+  const btnMonthlySave = document.getElementById('btn-admin-song-monthly-save');
+  const monthlySaved  = document.getElementById('admin-song-monthly-saved');
+
+  const winCountInput = document.getElementById('admin-song-win-count');
+  const btnWinSave    = document.getElementById('btn-admin-song-win-save');
+  const winSaved      = document.getElementById('admin-song-win-saved');
+
+  const favTitleInput  = document.getElementById('admin-song-fav-title');
+  const favUrlInput    = document.getElementById('admin-song-fav-url');
+  const favLyricsInput = document.getElementById('admin-song-fav-lyrics');
+  const btnFavAdd      = document.getElementById('btn-admin-song-fav-add');
+  const favError       = document.getElementById('admin-song-fav-error');
+  const favCountEl     = document.getElementById('admin-song-fav-count');
+  const favList        = document.getElementById('admin-song-fav-list');
+  const favEmptyEl     = document.getElementById('admin-song-fav-empty');
+
+  if (!btnMonthlySave) return;
+
+  // --- データ読み書き ---
+  function loadMonthly() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY)) || { title: '', url: '', lyrics: '' }; }
+    catch { return { title: '', url: '', lyrics: '' }; }
+  }
+  function saveMonthly(data) { localStorage.setItem(STORAGE_KEY_MONTHLY, JSON.stringify(data)); }
+
+  function loadFavList() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_FAV)) || []; }
+    catch { return []; }
+  }
+  function saveFavList(list) { localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(list)); }
+
+  function loadWinCount() {
+    const v = parseInt(localStorage.getItem(STORAGE_KEY_WIN));
+    return (!isNaN(v) && v >= 1 && v <= 9) ? v : 3;
+  }
+  function saveWinCount(v) { localStorage.setItem(STORAGE_KEY_WIN, String(v)); }
+
+  // --- 今月の歌フォームを初期化 ---
+  function loadMonthlyForm() {
+    const data = loadMonthly();
+    monthlyTitle.value  = data.title  || '';
+    monthlyUrl.value    = data.url    || '';
+    monthlyLyrics.value = data.lyrics || '';
+  }
+
+  // 今月の歌を保存
+  btnMonthlySave.addEventListener('click', () => {
+    saveMonthly({
+      title:  monthlyTitle.value.trim(),
+      url:    monthlyUrl.value.trim(),
+      lyrics: monthlyLyrics.value
+    });
+    monthlySaved.classList.remove('hidden');
+    setTimeout(() => monthlySaved.classList.add('hidden'), 2000);
+    document.dispatchEvent(new CustomEvent('song-updated'));
+  });
+
+  // --- 当たり枠数 ---
+  function loadWinForm() {
+    winCountInput.value = loadWinCount();
+  }
+
+  btnWinSave.addEventListener('click', () => {
+    let v = parseInt(winCountInput.value);
+    if (isNaN(v) || v < 1) v = 1;
+    if (v > 9) v = 9;
+    winCountInput.value = v;
+    saveWinCount(v);
+    winSaved.classList.remove('hidden');
+    setTimeout(() => winSaved.classList.add('hidden'), 2000);
+  });
+
+  // --- 好きな曲リスト ---
+  function renderFavList() {
+    const list = loadFavList();
+    favCountEl.textContent = `${list.length}曲登録中`;
+
+    Array.from(favList.children).forEach(li => {
+      if (li !== favEmptyEl) li.remove();
+    });
+
+    if (list.length === 0) {
+      favEmptyEl.style.display = '';
+    } else {
+      favEmptyEl.style.display = 'none';
+      list.forEach((song, i) => {
+        const li = document.createElement('li');
+        const span = document.createElement('span');
+        span.textContent = song.title;
+        span.style.flex = '1';
+        span.style.fontSize = '15px';
+
+        const delBtn = document.createElement('button');
+        delBtn.className   = 'btn-admin-remove';
+        delBtn.textContent = '削除';
+        delBtn.addEventListener('click', () => {
+          const updated = loadFavList();
+          updated.splice(i, 1);
+          saveFavList(updated);
+          renderFavList();
+          document.dispatchEvent(new CustomEvent('song-updated'));
+        });
+
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        favList.appendChild(li);
+      });
+    }
+  }
+
+  btnFavAdd.addEventListener('click', () => {
+    const title  = favTitleInput.value.trim();
+    const url    = favUrlInput.value.trim();
+    const lyrics = favLyricsInput.value;
+
+    if (!title || !url) {
+      favError.classList.remove('hidden');
+      return;
+    }
+    favError.classList.add('hidden');
+
+    const list = loadFavList();
+    list.push({ title, url, lyrics });
+    saveFavList(list);
+
+    favTitleInput.value  = '';
+    favUrlInput.value    = '';
+    favLyricsInput.value = '';
+    renderFavList();
+    document.dispatchEvent(new CustomEvent('song-updated'));
+  });
+
+  // 管理画面を開くたびにフォームを最新化
+  document.addEventListener('admin-opened', () => {
+    loadMonthlyForm();
+    loadWinForm();
+    renderFavList();
+  });
+
+  // 初回
+  loadMonthlyForm();
+  loadWinForm();
+  renderFavList();
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 // 起動時はスタート画面 → 💡ボタンを表示
@@ -1337,3 +1728,5 @@ initAttendance();
 initAdminRoster();
 initKyushoku();
 initAdminKyushoku();
+initSong();
+initAdminSong();

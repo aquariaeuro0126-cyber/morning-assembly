@@ -1925,3 +1925,429 @@ html, body {
   gap: 12px;
   justify-content: flex-end;
 }
+
+/* ============================================================
+   ⑥ 歌ミニアプリ
+   ============================================================ */
+
+.song-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+}
+
+.song-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  animation: fadeInUp 0.3s ease;
+}
+
+.song-phase.hidden {
+  display: none;
+}
+
+.song-guide {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--color-navy);
+  text-align: center;
+  line-height: 1.7;
+}
+
+.song-this-month {
+  font-size: 18px;
+  color: var(--color-text-light);
+  background: var(--color-gray-light);
+  border-radius: 12px;
+  padding: 8px 24px;
+  text-align: center;
+}
+
+.btn-song-lottery {
+  background: linear-gradient(135deg, #9b59b6, #6c3483);
+  color: var(--color-white);
+  border: none;
+  border-radius: 50px;
+  padding: 20px 52px;
+  font-size: 26px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(155,89,182,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.btn-song-lottery:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(155,89,182,0.5);
+}
+
+.btn-song-lottery:active {
+  transform: translateY(0);
+  animation: none;
+}
+
+.song-no-data {
+  font-size: 15px;
+  color: #ef5350;
+  background: #fde8e8;
+  border-radius: 10px;
+  padding: 8px 20px;
+}
+
+.song-no-data.hidden {
+  display: none;
+}
+
+/* くじ引きアニメーション */
+.lottery-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  border: 4px solid var(--color-sunrise);
+  border-radius: 24px;
+  padding: 32px 56px;
+  box-shadow: var(--shadow-strong);
+  animation: lotteryShake 0.4s ease infinite;
+}
+
+@keyframes lotteryShake {
+  0%, 100% { transform: rotate(-3deg) scale(1.02); }
+  50%       { transform: rotate(3deg)  scale(1.02); }
+}
+
+.lottery-icon {
+  font-size: 64px;
+  animation: float 0.6s ease-in-out infinite;
+}
+
+.lottery-shake-text {
+  font-size: 40px;
+  font-weight: bold;
+  color: var(--color-navy);
+  letter-spacing: 0.15em;
+}
+
+/* くじ引き結果 */
+.lottery-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: scorePopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.lottery-result.hidden {
+  display: none;
+}
+
+.lottery-result-badge {
+  font-size: 80px;
+  line-height: 1;
+}
+
+.lottery-result-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--color-navy);
+  text-align: center;
+}
+
+.btn-song-start {
+  background: linear-gradient(135deg, var(--color-sunrise), #e8851f);
+  color: var(--color-white);
+  border: none;
+  border-radius: 50px;
+  padding: 16px 44px;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255,154,60,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.btn-song-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,154,60,0.5);
+}
+
+.btn-song-start.hidden {
+  display: none;
+}
+
+/* 好きな曲選択リスト */
+.song-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.song-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--color-white);
+  border: 3px solid var(--color-blue);
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--color-navy);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+  text-align: left;
+  font-family: inherit;
+}
+
+.song-select-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-sunrise);
+  background: #fff9f0;
+}
+
+.song-select-btn:active {
+  transform: translateY(0);
+}
+
+/* 再生画面 */
+.song-now-playing {
+  background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+  border-radius: 16px;
+  padding: 16px 28px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 560px;
+}
+
+.song-now-label {
+  font-size: 14px;
+  color: #ad1457;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.song-now-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--color-navy);
+}
+
+/* YouTube プレーヤー枠 */
+.song-player-wrap {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-strong);
+}
+
+.song-player-wrap iframe {
+  display: block;
+  width: 100%;
+  height: 315px;
+  border: none;
+}
+
+/* 歌詞表示 */
+.song-lyrics-wrap {
+  width: 100%;
+  max-width: 560px;
+  background: var(--color-white);
+  border: 2px solid rgba(74,158,218,0.25);
+  border-radius: 16px;
+  padding: 16px 24px;
+  box-shadow: var(--shadow);
+}
+
+.song-lyrics-wrap.hidden {
+  display: none;
+}
+
+.song-lyrics-title {
+  font-size: 14px;
+  color: var(--color-text-light);
+  font-weight: bold;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--color-gray-light);
+  padding-bottom: 6px;
+}
+
+.song-lyrics-body {
+  font-size: 17px;
+  color: var(--color-navy);
+  line-height: 1.9;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   管理画面：歌設定セクション
+   ============================================================ */
+
+.admin-song-block {
+  background: var(--color-gray-light);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-song-block-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--color-navy);
+  margin-bottom: 4px;
+}
+
+.admin-song-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-song-field-col {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.admin-song-label {
+  font-size: 14px;
+  color: var(--color-text-light);
+  font-weight: bold;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.admin-song-input {
+  flex: 1;
+  min-width: 180px;
+  font-size: 15px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-gray);
+  border-radius: 10px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: var(--color-white);
+}
+
+.admin-song-input:focus {
+  border-color: var(--color-blue);
+}
+
+.admin-song-input-sm {
+  width: 80px;
+  font-size: 18px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-gray);
+  border-radius: 10px;
+  outline: none;
+  font-family: inherit;
+  text-align: center;
+  background: var(--color-white);
+}
+
+.admin-song-unit {
+  font-size: 14px;
+  color: var(--color-text-light);
+}
+
+.admin-song-textarea {
+  width: 100%;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-gray);
+  border-radius: 10px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  background: var(--color-white);
+  transition: border-color 0.2s;
+}
+
+.admin-song-textarea:focus {
+  border-color: var(--color-blue);
+}
+
+.admin-song-saved {
+  font-size: 14px;
+  color: var(--color-green);
+  font-weight: bold;
+}
+
+.admin-song-saved.hidden {
+  display: none;
+}
+
+.admin-song-error {
+  font-size: 14px;
+  color: #ef5350;
+}
+
+.admin-song-error.hidden {
+  display: none;
+}
+
+/* 好きな曲追加フォーム */
+.admin-song-fav-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-song-fav-list-wrap {
+  border: 2px solid var(--color-gray-light);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+.admin-song-fav-list-header {
+  background: var(--color-gray-light);
+  padding: 6px 14px;
+  font-size: 14px;
+  color: var(--color-text-light);
+  font-weight: bold;
+}
+
+.admin-song-fav-list {
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.admin-song-fav-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-gray-light);
+  font-size: 16px;
+  gap: 8px;
+}
+
+.admin-song-fav-list li:last-child {
+  border-bottom: none;
+}
+
+.admin-song-fav-list li:nth-child(even) {
+  background: #fafcff;
+}
