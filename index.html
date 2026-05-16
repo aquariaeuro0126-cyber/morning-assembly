@@ -305,8 +305,41 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「給食です。今日の献立は…」</p>
-              <div class="placeholder-box">
-                <p>給食ミニアプリ（開発予定）</p>
+
+              <div class="kyushoku-area">
+
+                <!-- フェーズ①：スタート -->
+                <div class="kyu-phase" id="kyu-phase-ready">
+                  <p class="kyu-guide">今日の献立クイズをやってみよう！</p>
+                  <div class="kyu-today-label" id="kyu-today-label">📅 読み込み中...</div>
+                  <button id="btn-kyu-start" class="btn-kyu-start">🍱 クイズをはじめる！</button>
+                  <p class="kyu-no-menu hidden" id="kyu-no-menu">⚠️ 管理画面で献立を登録してください</p>
+                </div>
+
+                <!-- フェーズ②：4択クイズ -->
+                <div class="kyu-phase hidden" id="kyu-phase-quiz">
+                  <p class="kyu-guide">今日の献立に入っているのはどれ？</p>
+                  <div class="kyu-quiz-grid" id="kyu-quiz-grid">
+                    <!-- JS で 4択ボタンを動的生成 -->
+                  </div>
+                  <div class="kyu-quiz-result hidden" id="kyu-quiz-result">
+                    <div class="kyu-result-icon" id="kyu-result-icon"></div>
+                    <div class="kyu-result-text" id="kyu-result-text"></div>
+                  </div>
+                  <div class="kyu-next-buttons hidden" id="kyu-next-buttons">
+                    <button id="btn-kyu-next" class="btn-kyu-confirm">献立を見る ▶</button>
+                  </div>
+                </div>
+
+                <!-- フェーズ③：献立一覧 -->
+                <div class="kyu-phase hidden" id="kyu-phase-menu">
+                  <p class="kyu-guide kyu-guide-menu">今日の給食！</p>
+                  <div class="kyu-menu-box" id="kyu-menu-box">
+                    <!-- JS で献立リストを動的生成 -->
+                  </div>
+                  <button id="btn-kyu-retry" class="btn-secondary">もう一度</button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -401,6 +434,31 @@
         <button id="btn-admin-close" class="btn-secondary">閉じる</button>
       </div>
       <div class="admin-body">
+
+        <!-- 給食：献立管理 -->
+        <section class="admin-section">
+          <h2 class="admin-section-title">🍱 給食 — 献立管理</h2>
+          <p class="admin-section-desc">最大5日分の献立を登録できます。当日の曜日と一致する献立がクイズに使われます。</p>
+
+          <div class="admin-menu-days" id="admin-menu-days">
+            <!-- 5日分のカード（JS で生成） -->
+          </div>
+
+          <!-- 献立追加モーダル風インライン編集 -->
+          <div class="admin-menu-edit hidden" id="admin-menu-edit">
+            <div class="admin-menu-edit-inner">
+              <h3 class="admin-menu-edit-title" id="admin-menu-edit-title">献立を編集</h3>
+              <p class="admin-menu-edit-desc">献立の品目を1行ずつ入力してください（最大8品）</p>
+              <div id="admin-menu-items-list" class="admin-menu-items-list">
+                <!-- JS で入力欄を生成 -->
+              </div>
+              <div class="admin-menu-edit-buttons">
+                <button id="btn-admin-menu-cancel" class="btn-secondary">キャンセル</button>
+                <button id="btn-admin-menu-save" class="btn-admin-add">保存</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <!-- 出席：名簿管理 -->
         <section class="admin-section">

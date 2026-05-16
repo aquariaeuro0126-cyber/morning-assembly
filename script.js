@@ -992,6 +992,311 @@ function initAdminRoster() {
 }
 
 // ----------------------------------------
+// ⑤ 給食ミニアプリ
+// ----------------------------------------
+function initKyushoku() {
+  const STORAGE_KEY = 'kyushokuMenus';
+  // 5日分のデータ構造: [ { label: '月曜日', items: ['ご飯', ...] }, ... ]
+  const DAY_LABELS = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
+
+  // ダミー候補（クイズの不正解選択肢として使用）
+  const DUMMY_ITEMS = [
+    'カレーライス', 'スパゲッティ', 'ラーメン', 'うどん', 'ピザ',
+    'ハンバーグ', 'から揚げ', 'コロッケ', 'エビフライ', 'サラダ',
+    'みそ汁', 'スープ', 'ヨーグルト', 'ゼリー', 'パン',
+    'おにぎり', '焼き魚', '煮物', 'チャーハン', 'オムライス'
+  ];
+
+  // --- データ操作 ---
+  function loadMenus() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return DAY_LABELS.map(label => ({ label, items: [] }));
+      return JSON.parse(raw);
+    } catch {
+      return DAY_LABELS.map(label => ({ label, items: [] }));
+    }
+  }
+
+  function saveMenus(menus) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
+  }
+
+  // 今日の曜日に対応する献立を返す（月〜金、0ベース）
+  function getTodayMenu(menus) {
+    const day = new Date().getDay(); // 0=日, 1=月, ... 6=土
+    // 月〜金 → インデックス 0〜4
+    const idx = day - 1;
+    if (idx < 0 || idx > 4) return null; // 土日は null
+    return menus[idx];
+  }
+
+  // Fisher-Yates シャッフル
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // --- ミニアプリ UI ---
+  const phaseReady  = document.getElementById('kyu-phase-ready');
+  const phaseQuiz   = document.getElementById('kyu-phase-quiz');
+  const phaseMenu   = document.getElementById('kyu-phase-menu');
+  const todayLabel  = document.getElementById('kyu-today-label');
+  const btnStart    = document.getElementById('btn-kyu-start');
+  const noMenuMsg   = document.getElementById('kyu-no-menu');
+  const quizGrid    = document.getElementById('kyu-quiz-grid');
+  const quizResult  = document.getElementById('kyu-quiz-result');
+  const resultIcon  = document.getElementById('kyu-result-icon');
+  const resultText  = document.getElementById('kyu-result-text');
+  const nextButtons = document.getElementById('kyu-next-buttons');
+  const btnNext     = document.getElementById('btn-kyu-next');
+  const menuBox     = document.getElementById('kyu-menu-box');
+  const btnRetry    = document.getElementById('btn-kyu-retry');
+
+  function showKyuPhase(id) {
+    [phaseReady, phaseQuiz, phaseMenu].forEach(el => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function refreshReadyPhase() {
+    const menus   = loadMenus();
+    const today   = getTodayMenu(menus);
+    const dayName = ['日', '月', '火', '水', '木', '金', '土'];
+    const day     = new Date().getDay();
+    todayLabel.textContent = `📅 今日は${dayName[day]}曜日`;
+
+    if (!today || today.items.length === 0) {
+      btnStart.disabled = true;
+      noMenuMsg.classList.remove('hidden');
+    } else {
+      btnStart.disabled = false;
+      noMenuMsg.classList.add('hidden');
+    }
+  }
+
+  btnStart.addEventListener('click', () => {
+    const menus  = loadMenus();
+    const today  = getTodayMenu(menus);
+    if (!today || today.items.length === 0) return;
+
+    // 正解：今日の献立からランダムに1品
+    const correct = today.items[Math.floor(Math.random() * today.items.length)];
+
+    // ダミー：今日の献立に含まれないDUMMY_ITEMSから3つ選ぶ
+    const dummies = shuffle(DUMMY_ITEMS.filter(d => !today.items.includes(d))).slice(0, 3);
+
+    // 4択をシャッフル
+    const choices = shuffle([correct, ...dummies]);
+
+    // クイズ画面を構築
+    quizGrid.innerHTML = '';
+    quizResult.classList.add('hidden');
+    nextButtons.classList.add('hidden');
+
+    choices.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'kyu-quiz-btn';
+      btn.textContent = item;
+      btn.addEventListener('click', () => {
+        // 全ボタンを無効化
+        quizGrid.querySelectorAll('.kyu-quiz-btn').forEach(b => b.disabled = true);
+
+        if (item === correct) {
+          btn.classList.add('correct');
+          resultIcon.textContent = '⭕';
+          resultText.textContent = '正解！ 「' + correct + '」だよ！';
+        } else {
+          btn.classList.add('wrong');
+          // 正解ボタンをハイライト
+          quizGrid.querySelectorAll('.kyu-quiz-btn').forEach(b => {
+            if (b.textContent === correct) b.classList.add('correct');
+          });
+          resultIcon.textContent = '❌';
+          resultText.textContent = '残念！ 正解は「' + correct + '」だよ！';
+        }
+
+        quizResult.classList.remove('hidden');
+        nextButtons.classList.remove('hidden');
+      });
+      quizGrid.appendChild(btn);
+    });
+
+    // 献立一覧フェーズ用に保存
+    btnNext.dataset.items = JSON.stringify(today.items);
+
+    showKyuPhase('kyu-phase-quiz');
+  });
+
+  btnNext.addEventListener('click', () => {
+    let items = [];
+    try { items = JSON.parse(btnNext.dataset.items); } catch { items = []; }
+
+    const icons = ['🍚', '🍜', '🥗', '🍞', '🥛', '🍮', '🫕', '🥘'];
+    menuBox.innerHTML = '';
+    items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'kyu-menu-item';
+      div.style.animationDelay = (i * 0.08) + 's';
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'kyu-menu-item-icon';
+      iconSpan.textContent = icons[i % icons.length];
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = item;
+      div.appendChild(iconSpan);
+      div.appendChild(nameSpan);
+      menuBox.appendChild(div);
+    });
+
+    showKyuPhase('kyu-phase-menu');
+  });
+
+  btnRetry.addEventListener('click', () => {
+    refreshReadyPhase();
+    showKyuPhase('kyu-phase-ready');
+  });
+
+  // 管理画面を閉じたときに Ready フェーズの表示を更新
+  document.addEventListener('roster-updated', refreshReadyPhase);
+
+  refreshReadyPhase();
+}
+
+// ----------------------------------------
+// 管理画面：給食献立管理
+// ----------------------------------------
+function initAdminKyushoku() {
+  const STORAGE_KEY = 'kyushokuMenus';
+  const DAY_LABELS  = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
+  const MAX_ITEMS   = 8;
+
+  function loadMenus() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return DAY_LABELS.map(label => ({ label, items: [] }));
+      return JSON.parse(raw);
+    } catch {
+      return DAY_LABELS.map(label => ({ label, items: [] }));
+    }
+  }
+
+  function saveMenus(menus) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
+  }
+
+  const daysContainer = document.getElementById('admin-menu-days');
+  const editArea      = document.getElementById('admin-menu-edit');
+  const editTitle     = document.getElementById('admin-menu-edit-title');
+  const itemsList     = document.getElementById('admin-menu-items-list');
+  const btnCancel     = document.getElementById('btn-admin-menu-cancel');
+  const btnSave       = document.getElementById('btn-admin-menu-save');
+
+  let editingIndex = -1;
+
+  function renderDayCards() {
+    const menus = loadMenus();
+    daysContainer.innerHTML = '';
+
+    menus.forEach((menu, i) => {
+      const card = document.createElement('div');
+      card.className = 'admin-menu-day-card' + (menu.items.length > 0 ? ' has-menu' : '');
+
+      const label = document.createElement('div');
+      label.className = 'admin-menu-day-label';
+      label.textContent = menu.label;
+
+      const content = document.createElement('div');
+      content.className = 'admin-menu-day-content';
+
+      if (menu.items.length === 0) {
+        const empty = document.createElement('span');
+        empty.className = 'admin-menu-empty-text';
+        empty.textContent = '未登録';
+        content.appendChild(empty);
+      } else {
+        menu.items.forEach(item => {
+          const chip = document.createElement('span');
+          chip.className = 'admin-menu-chip';
+          chip.textContent = item;
+          content.appendChild(chip);
+        });
+      }
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-admin-menu-edit';
+      editBtn.textContent = '編集';
+      editBtn.addEventListener('click', () => openEditArea(i));
+
+      card.appendChild(label);
+      card.appendChild(content);
+      card.appendChild(editBtn);
+      daysContainer.appendChild(card);
+    });
+  }
+
+  function openEditArea(index) {
+    const menus = loadMenus();
+    const menu  = menus[index];
+    editingIndex = index;
+
+    editTitle.textContent = `🍱 ${menu.label} の献立を編集`;
+
+    // 入力欄を MAX_ITEMS 個生成
+    itemsList.innerHTML = '';
+    for (let i = 0; i < MAX_ITEMS; i++) {
+      const row = document.createElement('div');
+      row.className = 'admin-menu-item-row';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'admin-menu-item-input';
+      input.placeholder = `品目 ${i + 1}（空欄は除外）`;
+      input.maxLength = 30;
+      input.value = menu.items[i] || '';
+
+      row.appendChild(input);
+      itemsList.appendChild(row);
+    }
+
+    editArea.classList.remove('hidden');
+    // 最初の入力欄にフォーカス
+    itemsList.querySelector('input')?.focus();
+  }
+
+  btnCancel.addEventListener('click', () => {
+    editArea.classList.add('hidden');
+    editingIndex = -1;
+  });
+
+  btnSave.addEventListener('click', () => {
+    if (editingIndex < 0) return;
+
+    const inputs = itemsList.querySelectorAll('.admin-menu-item-input');
+    const items  = [];
+    inputs.forEach(inp => {
+      const val = inp.value.trim();
+      if (val) items.push(val);
+    });
+
+    const menus = loadMenus();
+    menus[editingIndex].items = items;
+    saveMenus(menus);
+
+    editArea.classList.add('hidden');
+    editingIndex = -1;
+    renderDayCards();
+  });
+
+  // 管理画面を開くたびにリストを再描画
+  document.addEventListener('admin-opened', renderDayCards);
+
+  renderDayCards();
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 renderDots(0);
@@ -1000,3 +1305,5 @@ initVoiceElements();
 initDateWeather();
 initAttendance();
 initAdminRoster();
+initKyushoku();
+initAdminKyushoku();
