@@ -256,8 +256,43 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「出席をとります。」</p>
-              <div class="placeholder-box">
-                <p>出席ミニアプリ（開発予定）</p>
+
+              <div class="attendance-area">
+
+                <!-- フェーズ①：スタート -->
+                <div class="att-phase" id="att-phase-ready">
+                  <p class="att-guide">ボタンをおして出席をはじめよう！</p>
+                  <div class="att-member-count" id="att-member-count">登録：0人</div>
+                  <button id="btn-att-start" class="btn-att-start">📋 出席をはじめる</button>
+                  <p class="att-no-member hidden" id="att-no-member">⚠️ 管理画面で名前を登録してください</p>
+                </div>
+
+                <!-- フェーズ②：呼名 -->
+                <div class="att-phase hidden" id="att-phase-calling">
+                  <div class="att-progress-text" id="att-progress-text">1 / 30</div>
+                  <div class="att-name-card" id="att-name-card">
+                    <div class="att-name" id="att-name">田中はなこ</div>
+                  </div>
+                  <div class="att-call-buttons">
+                    <button id="btn-att-present" class="btn-att-present">🙋 出席</button>
+                    <button id="btn-att-absent"  class="btn-att-absent">😔 欠席</button>
+                  </div>
+                </div>
+
+                <!-- フェーズ③：集計結果 -->
+                <div class="att-phase hidden" id="att-phase-result">
+                  <div class="att-result-box" id="att-result-box">
+                    <div class="att-result-icon" id="att-result-icon">🌟</div>
+                    <div class="att-result-main" id="att-result-main"></div>
+                    <div class="att-result-detail" id="att-result-detail"></div>
+                  </div>
+                  <div class="att-absent-list hidden" id="att-absent-list">
+                    <p class="att-absent-title">欠席：</p>
+                    <p class="att-absent-names" id="att-absent-names"></p>
+                  </div>
+                  <button id="btn-att-retry" class="btn-secondary">もう一度</button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -366,7 +401,32 @@
         <button id="btn-admin-close" class="btn-secondary">閉じる</button>
       </div>
       <div class="admin-body">
-        <p class="admin-placeholder">管理機能（順次追加予定）</p>
+
+        <!-- 出席：名簿管理 -->
+        <section class="admin-section">
+          <h2 class="admin-section-title">📋 出席 — 名簿管理</h2>
+
+          <!-- 名前追加フォーム -->
+          <div class="admin-name-form">
+            <input type="text" id="admin-name-input" class="admin-name-input"
+              placeholder="名前を入力（例：田中はなこ）" maxlength="20" />
+            <button id="btn-admin-add-name" class="btn-admin-add">追加</button>
+          </div>
+          <p class="admin-name-error hidden" id="admin-name-error">名前を入力してください</p>
+
+          <!-- 登録済み名前リスト -->
+          <div class="admin-name-list-wrap">
+            <div class="admin-name-list-header">
+              <span id="admin-name-count">0人登録中</span>
+              <button id="btn-admin-clear-all" class="btn-admin-danger">全員削除</button>
+            </div>
+            <ul class="admin-name-list" id="admin-name-list">
+              <!-- JS で動的に生成 -->
+              <li class="admin-name-empty" id="admin-name-empty">まだ名前が登録されていません</li>
+            </ul>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>

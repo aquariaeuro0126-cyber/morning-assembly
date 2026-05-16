@@ -290,6 +290,8 @@ function checkAdminPassword() {
   if (adminInput.value === ADMIN_PASSWORD) {
     modalAdmin.classList.add('hidden');
     showScreen(screenAdmin);
+    // 管理画面を開いた際に名簿リストを最新化
+    document.dispatchEvent(new CustomEvent('admin-opened'));
   } else {
     modalError.classList.remove('hidden');
     adminInput.value = '';
@@ -299,6 +301,8 @@ function checkAdminPassword() {
 
 btnAdminClose.addEventListener('click', () => {
   showScreen(screenStart);
+  // 名簿変更を出席ミニアプリに反映
+  document.dispatchEvent(new CustomEvent('roster-updated'));
 });
 
 // ----------------------------------------
@@ -751,9 +755,248 @@ function initDateWeather() {
 }
 
 // ----------------------------------------
+// ④ 出席ミニアプリ
+// ----------------------------------------
+function initAttendance() {
+
+  // --- DOM 取得 ---
+  const phaseReady   = document.getElementById('att-phase-ready');
+  const phaseCalling = document.getElementById('att-phase-calling');
+  const phaseResult  = document.getElementById('att-phase-result');
+
+  const memberCountEl  = document.getElementById('att-member-count');
+  const noMemberEl     = document.getElementById('att-no-member');
+  const btnAttStart    = document.getElementById('btn-att-start');
+
+  const progressTextEl = document.getElementById('att-progress-text');
+  const nameEl         = document.getElementById('att-name');
+  const btnPresent     = document.getElementById('btn-att-present');
+  const btnAbsent      = document.getElementById('btn-att-absent');
+
+  const resultIconEl   = document.getElementById('att-result-icon');
+  const resultMainEl   = document.getElementById('att-result-main');
+  const resultDetailEl = document.getElementById('att-result-detail');
+  const absentListEl   = document.getElementById('att-absent-list');
+  const absentNamesEl  = document.getElementById('att-absent-names');
+  const btnAttRetry    = document.getElementById('btn-att-retry');
+
+  // --- 状態変数 ---
+  let shuffledNames = []; // シャッフル済み名前リスト
+  let callIndex     = 0;  // 現在呼名中のインデックス
+  let absentNames   = []; // 欠席者リスト
+
+  // --- ユーティリティ ---
+
+  // localStorage から名前リストを取得
+  function loadNames() {
+    const raw = localStorage.getItem('att_names');
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  // Fisher-Yates シャッフル
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // フェーズ切り替え
+  function showAttPhase(phase) {
+    [phaseReady, phaseCalling, phaseResult].forEach(p => p.classList.add('hidden'));
+    phase.classList.remove('hidden');
+  }
+
+  // スタート画面の人数表示を更新
+  function refreshReadyScreen() {
+    const names = loadNames();
+    memberCountEl.textContent = `登録：${names.length}人`;
+  }
+
+  // --- フェーズ①：スタートボタン ---
+  btnAttStart.addEventListener('click', () => {
+    const names = loadNames();
+    if (names.length === 0) {
+      noMemberEl.classList.remove('hidden');
+      return;
+    }
+    noMemberEl.classList.add('hidden');
+
+    // 初期化
+    shuffledNames = shuffle(names);
+    callIndex     = 0;
+    absentNames   = [];
+
+    showCallCard();
+    showAttPhase(phaseCalling);
+  });
+
+  // 現在の呼名カードを表示
+  function showCallCard() {
+    nameEl.textContent       = shuffledNames[callIndex];
+    progressTextEl.textContent = `${callIndex + 1} / ${shuffledNames.length}`;
+
+    // 名前カードにアニメーション再起動
+    nameEl.closest('.att-name-card').style.animation = 'none';
+    requestAnimationFrame(() => {
+      nameEl.closest('.att-name-card').style.animation = '';
+    });
+  }
+
+  // --- フェーズ②：出席 / 欠席ボタン ---
+  function handleCall(isPresent) {
+    if (!isPresent) {
+      absentNames.push(shuffledNames[callIndex]);
+    }
+    callIndex++;
+
+    if (callIndex < shuffledNames.length) {
+      showCallCard();
+    } else {
+      showResult();
+    }
+  }
+
+  btnPresent.addEventListener('click', () => handleCall(true));
+  btnAbsent.addEventListener('click',  () => handleCall(false));
+
+  // --- フェーズ③：集計結果表示 ---
+  function showResult() {
+    const total   = shuffledNames.length;
+    const absent  = absentNames.length;
+    const present = total - absent;
+
+    if (absent === 0) {
+      resultIconEl.textContent  = '🌟';
+      resultMainEl.textContent  = '全員出席！';
+      resultDetailEl.textContent = `${total}人 みんな来たよ！`;
+      absentListEl.classList.add('hidden');
+    } else {
+      resultIconEl.textContent  = '📋';
+      resultMainEl.textContent  = `出席 ${present}人 / 欠席 ${absent}人`;
+      resultDetailEl.textContent = `全体 ${total}人`;
+      absentNamesEl.textContent  = absentNames.join('、');
+      absentListEl.classList.remove('hidden');
+    }
+
+    showAttPhase(phaseResult);
+  }
+
+  // --- 「もう一度」ボタン ---
+  btnAttRetry.addEventListener('click', () => {
+    refreshReadyScreen();
+    showAttPhase(phaseReady);
+  });
+
+  // --- 名簿変更を受け取り人数表示を更新 ---
+  document.addEventListener('roster-updated', refreshReadyScreen);
+
+  // --- 初回表示 ---
+  refreshReadyScreen();
+}
+
+// ----------------------------------------
+// 管理画面 — 名簿管理
+// ----------------------------------------
+function initAdminRoster() {
+
+  const nameInput      = document.getElementById('admin-name-input');
+  const btnAddName     = document.getElementById('btn-admin-add-name');
+  const nameError      = document.getElementById('admin-name-error');
+  const nameList       = document.getElementById('admin-name-list');
+  const nameCountEl    = document.getElementById('admin-name-count');
+  const nameEmptyEl    = document.getElementById('admin-name-empty');
+  const btnClearAll    = document.getElementById('btn-admin-clear-all');
+
+  // localStorage の読み書き
+  function loadNames() {
+    const raw = localStorage.getItem('att_names');
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  function saveNames(names) {
+    localStorage.setItem('att_names', JSON.stringify(names));
+  }
+
+  // リストを再描画
+  function renderList() {
+    const names = loadNames();
+
+    // 人数表示
+    nameCountEl.textContent = `${names.length}人登録中`;
+
+    // 既存リストアイテムをすべて削除（空メッセージ以外）
+    Array.from(nameList.children).forEach(li => {
+      if (li !== nameEmptyEl) li.remove();
+    });
+
+    if (names.length === 0) {
+      nameEmptyEl.style.display = '';
+    } else {
+      nameEmptyEl.style.display = 'none';
+      names.forEach((name, i) => {
+        const li     = document.createElement('li');
+        const span   = document.createElement('span');
+        span.textContent = name;
+        const delBtn = document.createElement('button');
+        delBtn.className   = 'btn-admin-remove';
+        delBtn.textContent = '削除';
+        delBtn.addEventListener('click', () => {
+          const updated = loadNames();
+          updated.splice(i, 1);
+          saveNames(updated);
+          renderList();
+        });
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        nameList.appendChild(li);
+      });
+    }
+  }
+
+  // 名前追加
+  btnAddName.addEventListener('click', () => {
+    const val = nameInput.value.trim();
+    if (!val) {
+      nameError.classList.remove('hidden');
+      return;
+    }
+    nameError.classList.add('hidden');
+
+    const names = loadNames();
+    names.push(val);
+    saveNames(names);
+    nameInput.value = '';
+    renderList();
+  });
+
+  // Enterキーでも追加
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') btnAddName.click();
+  });
+
+  // 全員削除
+  btnClearAll.addEventListener('click', () => {
+    if (!confirm('全員の名前を削除しますか？')) return;
+    saveNames([]);
+    renderList();
+  });
+
+  // 管理画面を開くたびにリストを最新化
+  document.addEventListener('admin-opened', renderList);
+
+  // 初回描画
+  renderList();
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 renderDots(0);
 initReikoElements();
 initVoiceElements();
 initDateWeather();
+initAttendance();
+initAdminRoster();
