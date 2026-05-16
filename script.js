@@ -316,43 +316,52 @@ let micStream       = null;
 let measureInterval = null;
 let maxVolume       = 0;       // 測定中の最大音量（0〜255）
 
-// フェーズ要素
-const phaseReady     = document.getElementById('voice-phase-ready');
-const phaseCountdown = document.getElementById('voice-phase-countdown');
-const phaseMeasuring = document.getElementById('voice-phase-measuring');
-const phaseResult    = document.getElementById('voice-phase-result');
-const countdownNum   = document.getElementById('countdown-number');
-const volumeFill     = document.getElementById('volume-meter-fill');
-const measureTimer   = document.getElementById('measure-timer');
-const resultScore    = document.getElementById('result-score');
-const resultMessage  = document.getElementById('result-message');
-const btnVoiceStart  = document.getElementById('btn-voice-start');
-const btnVoiceRetry  = document.getElementById('btn-voice-retry');
+// フェーズ要素（DOM読み込み後に安全に取得）
+let phaseReady, phaseCountdown, phaseMeasuring, phaseResult;
+let countdownNum, volumeFill, measureTimer, resultScore, resultMessage;
+
+function initVoiceElements() {
+  phaseReady     = document.getElementById('voice-phase-ready');
+  phaseCountdown = document.getElementById('voice-phase-countdown');
+  phaseMeasuring = document.getElementById('voice-phase-measuring');
+  phaseResult    = document.getElementById('voice-phase-result');
+  countdownNum   = document.getElementById('countdown-number');
+  volumeFill     = document.getElementById('volume-meter-fill');
+  measureTimer   = document.getElementById('measure-timer');
+  resultScore    = document.getElementById('result-score');
+  resultMessage  = document.getElementById('result-message');
+
+  const btnVoiceStart = document.getElementById('btn-voice-start');
+  const btnVoiceRetry = document.getElementById('btn-voice-retry');
+
+  if (btnVoiceStart) {
+    btnVoiceStart.addEventListener('click', async () => {
+      try {
+        await startMicAndCountdown();
+      } catch (e) {
+        alert('マイクの使用が許可されませんでした。\nSafariの設定でマイクを許可してください。');
+      }
+    });
+  }
+
+  if (btnVoiceRetry) {
+    btnVoiceRetry.addEventListener('click', () => {
+      stopMic();
+      maxVolume = 0;
+      if (volumeFill) volumeFill.style.width = '0%';
+      showVoicePhase(phaseReady);
+    });
+  }
+}
 
 // フェーズ切り替え
 function showVoicePhase(phase) {
+  if (!phase) return;
   [phaseReady, phaseCountdown, phaseMeasuring, phaseResult].forEach(p => {
-    p.classList.add('hidden');
+    if (p) p.classList.add('hidden');
   });
   phase.classList.remove('hidden');
 }
-
-// スタートボタン
-btnVoiceStart.addEventListener('click', async () => {
-  try {
-    await startMicAndCountdown();
-  } catch (e) {
-    alert('マイクの使用が許可されませんでした。\nSafariの設定でマイクを許可してください。');
-  }
-});
-
-// もう一度ボタン
-btnVoiceRetry.addEventListener('click', () => {
-  stopMic();
-  maxVolume = 0;
-  volumeFill.style.width = '0%';
-  showVoicePhase(phaseReady);
-});
 
 // マイク起動 → カウントダウン → 測定
 async function startMicAndCountdown() {
@@ -395,10 +404,11 @@ function startMeasuring() {
 
   // リアルタイム音量バー更新（60fps相当）
   measureInterval = setInterval(() => {
+    if (!analyser) return;
     analyser.getByteFrequencyData(dataArray);
     const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
     const pct = Math.min(avg / 80 * 100, 100); // 80を基準に正規化
-    volumeFill.style.width = pct + '%';
+    if (volumeFill) volumeFill.style.width = pct + '%';
     if (avg > maxVolume) maxVolume = avg;
   }, 16);
 
@@ -459,6 +469,7 @@ function stopMic() {
 }
 
 // ----------------------------------------
-// 初期化：プログレスドットを生成
+// 初期化
 // ----------------------------------------
 renderDots(0);
+initVoiceElements();
