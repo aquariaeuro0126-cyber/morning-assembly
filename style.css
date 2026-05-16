@@ -93,15 +93,34 @@ html, body {
   color: var(--color-text-light);
 }
 
-/* 管理画面トリガー（右下の目立たない領域） */
-.admin-trigger {
+/* 管理画面トリガー（左下の💡ボタン） */
+.admin-bulb-btn {
   position: fixed;
-  bottom: 0;
-  right: 0;
-  width: 60px;
-  height: 60px;
-  cursor: default;
+  bottom: 20px;
+  left: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 26px;
+  cursor: pointer;
   z-index: 10;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: background 0.2s, transform 0.15s;
+  display: none; /* スタート画面表示中だけ表示（JS で制御） */
+}
+
+.admin-bulb-btn.visible {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-bulb-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* ========================================

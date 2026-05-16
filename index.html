@@ -11,13 +11,13 @@
   <!-- ========== スタート画面 ========== -->
   <div id="screen-start" class="screen active">
     <div class="start-inner">
-      <div class="start-icon">🌅</div>
+      <div class="start-icon" id="start-icon">🌅</div>
       <h1 class="start-title">朝の会</h1>
       <p class="start-subtitle">今日も元気にはじめよう！</p>
       <button id="btn-start" class="btn-main">はじめる</button>
     </div>
-    <!-- 管理画面への隠しトリガー（ロゴを3回タップ） -->
-    <div id="admin-trigger" class="admin-trigger"></div>
+    <!-- 管理画面トリガー：💡→🌅→💡 の順にタップ -->
+    <button id="admin-trigger-bulb" class="admin-bulb-btn" aria-label="設定">💡</button>
   </div>
 
   <!-- ========== メイン画面 ========== -->

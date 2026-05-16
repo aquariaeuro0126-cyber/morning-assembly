@@ -7,11 +7,11 @@
 // ----------------------------------------
 const TOTAL_STEPS = 8;
 const ADMIN_PASSWORD = '1234';       // ← パスワードはここで変更できます
-const ADMIN_TAP_COUNT = 3;           // 何回タップで管理画面トリガーか
+// 管理画面トリガー：タップ順序 '💡' → '🌅' → '💡'
 const END_COUNTDOWN_SEC = 10;        // 終了画面の自動戻り秒数
 
-// 管理画面トリガー：タップ間隔（ミリ秒）以内に連続タップで認識
-const ADMIN_TAP_INTERVAL = 1500;
+// 管理画面トリガー：タップ間隔（ミリ秒）以内に次のタップで認識
+const ADMIN_TAP_INTERVAL = 3000;
 
 // ----------------------------------------
 // 状態管理
@@ -19,7 +19,9 @@ const ADMIN_TAP_INTERVAL = 1500;
 let currentStep = 0;       // 現在のステップ（0〜7）
 let completedSteps = [];   // 完了済みステップ
 let countdownTimer = null; // 終了画面カウントダウン用タイマー
-let adminTapCount = 0;     // 管理画面トリガー タップ回数
+// 管理画面トリガー: タップ順序 bulb→sun→bulb を追跡
+// 0: 待機中, 1: 💡を1回タップ済み, 2: 🌅をタップ済み
+let adminTapStep  = 0;
 let adminTapTimer = null;  // タップ間隔リセット用タイマー
 
 // ----------------------------------------
@@ -38,7 +40,8 @@ const btnBackStart   = document.getElementById('btn-back-start');
 const btnAdminCancel = document.getElementById('btn-admin-cancel');
 const btnAdminEnter  = document.getElementById('btn-admin-enter');
 const btnAdminClose  = document.getElementById('btn-admin-close');
-const adminTrigger   = document.getElementById('admin-trigger');
+const adminTriggerBulb = document.getElementById('admin-trigger-bulb');
+const startIcon        = document.getElementById('start-icon');
 const adminInput     = document.getElementById('admin-password-input');
 const modalError     = document.getElementById('modal-error');
 const countdownFill  = document.getElementById('countdown-fill');
@@ -55,6 +58,13 @@ function showScreen(screen) {
     s.classList.remove('active');
   });
   screen.classList.add('active');
+  // スタート画面のときだけ💡ボタンを表示
+  if (screen === screenStart) {
+    adminTriggerBulb.classList.add('visible');
+  } else {
+    adminTriggerBulb.classList.remove('visible');
+    resetAdminTap();
+  }
 }
 
 // ----------------------------------------
@@ -250,21 +260,38 @@ function weatherCodeToJapanese(code) {
 }
 
 // ----------------------------------------
-// 管理画面トリガー（右下の隠しエリアを3回タップ）
+// 管理画面トリガー（💡→🌅→💡 の順にタップ）
 // ----------------------------------------
-adminTrigger.addEventListener('click', () => {
-  adminTapCount++;
-
+function resetAdminTap() {
+  adminTapStep = 0;
   clearTimeout(adminTapTimer);
-  adminTapTimer = setTimeout(() => {
-    adminTapCount = 0;
-  }, ADMIN_TAP_INTERVAL);
+}
 
-  if (adminTapCount >= ADMIN_TAP_COUNT) {
-    adminTapCount = 0;
-    clearTimeout(adminTapTimer);
+function advanceAdminTap(expectedStep) {
+  if (adminTapStep !== expectedStep) return; // 順序違いは無視
+  adminTapStep++;
+  clearTimeout(adminTapTimer);
+  adminTapTimer = setTimeout(resetAdminTap, ADMIN_TAP_INTERVAL);
+
+  if (adminTapStep >= 3) {
+    resetAdminTap();
     openAdminModal();
   }
+}
+
+// 💡ボタン（step 0 → 1、step 2 → 完成）
+adminTriggerBulb.addEventListener('click', () => {
+  if (adminTapStep === 0) {
+    advanceAdminTap(0); // step 0 → 1
+  } else if (adminTapStep === 2) {
+    advanceAdminTap(2); // step 2 → 3（開放）
+  }
+  // step 1（🌅 待ち）のときは何もしない（タイムアウトで自動リセット）
+});
+
+// 🌅アイコン（step 1 → 2）
+startIcon.addEventListener('click', () => {
+  advanceAdminTap(1);
 });
 
 // ----------------------------------------
@@ -1299,6 +1326,9 @@ function initAdminKyushoku() {
 // ----------------------------------------
 // 初期化
 // ----------------------------------------
+// 起動時はスタート画面 → 💡ボタンを表示
+adminTriggerBulb.classList.add('visible');
+
 renderDots(0);
 initReikoElements();
 initVoiceElements();
