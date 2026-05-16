@@ -176,9 +176,66 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「日付・曜日・天気です。」</p>
-              <div class="date-weather-box" id="date-weather-box">
-                <p class="date-text" id="date-text">読み込み中...</p>
-                <p class="weather-text" id="weather-text">天気：--</p>
+
+              <div class="dw-area">
+
+                <!-- フェーズ①：日付・曜日スライダー選択 -->
+                <div class="dw-phase" id="dw-phase-date">
+                  <p class="dw-guide">今日の日付と曜日をえらぼう！</p>
+                  <div class="dw-sliders">
+
+                    <!-- 月 -->
+                    <div class="dw-slider-col">
+                      <button class="dw-arrow dw-arrow-up" data-target="month">▲</button>
+                      <div class="dw-value-box" id="dw-month-display">4</div>
+                      <div class="dw-unit">月</div>
+                      <button class="dw-arrow dw-arrow-down" data-target="month">▼</button>
+                    </div>
+
+                    <!-- 日 -->
+                    <div class="dw-slider-col">
+                      <button class="dw-arrow dw-arrow-up" data-target="day">▲</button>
+                      <div class="dw-value-box" id="dw-day-display">1</div>
+                      <div class="dw-unit">日</div>
+                      <button class="dw-arrow dw-arrow-down" data-target="day">▼</button>
+                    </div>
+
+                    <!-- 曜日 -->
+                    <div class="dw-slider-col">
+                      <button class="dw-arrow dw-arrow-up" data-target="weekday">▲</button>
+                      <div class="dw-value-box dw-value-box-wide" id="dw-weekday-display">月</div>
+                      <div class="dw-unit">曜日</div>
+                      <button class="dw-arrow dw-arrow-down" data-target="weekday">▼</button>
+                    </div>
+
+                  </div>
+                  <button id="btn-dw-confirm" class="btn-dw-confirm">確認！ ✅</button>
+                </div>
+
+                <!-- フェーズ②：天気クイズ -->
+                <div class="dw-phase hidden" id="dw-phase-weather">
+                  <p class="dw-guide">今日の天気は？</p>
+                  <div class="weather-quiz-grid" id="weather-quiz-grid">
+                    <button class="weather-quiz-btn" data-weather="晴れ">☀️<span>晴れ</span></button>
+                    <button class="weather-quiz-btn" data-weather="くもり">⛅<span>くもり</span></button>
+                    <button class="weather-quiz-btn" data-weather="雨">🌧️<span>雨</span></button>
+                    <button class="weather-quiz-btn" data-weather="雪">❄️<span>雪</span></button>
+                  </div>
+                  <div class="weather-quiz-result hidden" id="weather-quiz-result">
+                    <div class="quiz-result-icon" id="quiz-result-icon"></div>
+                    <div class="quiz-result-text" id="quiz-result-text"></div>
+                    <button id="btn-dw-next" class="btn-dw-confirm">次へ ▶</button>
+                  </div>
+                </div>
+
+                <!-- フェーズ③：まとめ表示 -->
+                <div class="dw-phase hidden" id="dw-phase-summary">
+                  <div class="dw-summary-box" id="dw-summary-box">
+                    <div class="dw-summary-text" id="dw-summary-text"></div>
+                  </div>
+                  <button id="btn-dw-retry" class="btn-secondary">もう一度</button>
+                </div>
+
               </div>
             </div>
           </div>

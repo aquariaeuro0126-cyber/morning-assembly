@@ -990,3 +990,212 @@ html, body {
   from { transform: scale(0.5); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
 }
+
+/* ========================================
+   ③ 日付・曜日・天気ミニアプリ
+======================================== */
+
+.dw-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.dw-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.dw-guide {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--color-navy);
+  text-align: center;
+}
+
+/* スライダーエリア */
+.dw-sliders {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.dw-slider-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dw-arrow {
+  width: 56px;
+  height: 48px;
+  font-size: 22px;
+  background: var(--color-sky);
+  border: 2px solid var(--color-blue);
+  border-radius: 12px;
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dw-arrow:hover {
+  background: var(--color-blue);
+  color: var(--color-white);
+}
+
+.dw-arrow:active {
+  transform: scale(0.92);
+}
+
+.dw-value-box {
+  width: 72px;
+  height: 72px;
+  background: var(--color-white);
+  border: 3px solid var(--color-sunrise);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--color-navy);
+  box-shadow: var(--shadow);
+}
+
+.dw-value-box-wide {
+  width: 88px;
+}
+
+.dw-unit {
+  font-size: 16px;
+  color: var(--color-text-light);
+  font-weight: bold;
+}
+
+/* 確認ボタン */
+.btn-dw-confirm {
+  padding: 14px 40px;
+  font-size: 22px;
+  font-weight: bold;
+  background: linear-gradient(135deg, var(--color-sunrise), var(--color-sun));
+  color: var(--color-white);
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-dw-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+}
+
+.btn-dw-confirm:active {
+  transform: translateY(0);
+}
+
+/* 天気クイズグリッド */
+.weather-quiz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.weather-quiz-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 12px;
+  font-size: 44px;
+  background: var(--color-white);
+  border: 3px solid var(--color-blue);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+  box-shadow: var(--shadow);
+}
+
+.weather-quiz-btn span {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--color-navy);
+}
+
+.weather-quiz-btn:hover {
+  transform: translateY(-3px);
+  background: var(--color-sky);
+  border-color: var(--color-sunrise);
+}
+
+.weather-quiz-btn:active {
+  transform: translateY(0);
+}
+
+.weather-quiz-btn.correct {
+  background: #d4f7e8;
+  border-color: var(--color-green);
+}
+
+.weather-quiz-btn.wrong {
+  background: #fde8e8;
+  border-color: #e57373;
+  opacity: 0.6;
+}
+
+.weather-quiz-btn:disabled {
+  cursor: default;
+  transform: none;
+}
+
+/* クイズ結果 */
+.weather-quiz-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.quiz-result-icon {
+  font-size: 56px;
+  animation: scorePopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.quiz-result-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--color-navy);
+  text-align: center;
+}
+
+/* まとめ表示 */
+.dw-summary-box {
+  background: linear-gradient(135deg, #fff9f0, #fffde7);
+  border: 3px solid var(--color-sun);
+  border-radius: 24px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: scorePopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dw-summary-text {
+  font-size: 26px;
+  font-weight: bold;
+  color: var(--color-navy);
+  line-height: 1.7;
+}

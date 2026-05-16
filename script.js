@@ -535,8 +535,197 @@ function initReikoElements() {
 }
 
 // ----------------------------------------
+// ③ 日付・曜日・天気ミニアプリ
+// ----------------------------------------
+
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+// 実際の天気をAPIまたはキャッシュから取得して返す
+function fetchTodayWeather() {
+  return new Promise(resolve => {
+    const now   = new Date();
+    const month = now.getMonth() + 1;
+    const day   = now.getDate();
+    const today = `${now.getFullYear()}-${month}-${day}`;
+
+    const cached     = localStorage.getItem('weather_today');
+    const cachedDate = localStorage.getItem('weather_date');
+
+    if (cached && cachedDate === today) {
+      resolve(cached);
+      return;
+    }
+
+    const lat = localStorage.getItem('school_lat') || '35.6895';
+    const lon = localStorage.getItem('school_lon') || '139.6917';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const code    = data.current_weather.weathercode;
+        const weather = weatherCodeToJapanese(code);
+        // キャッシュ保存
+        localStorage.setItem('weather_today', weather);
+        localStorage.setItem('weather_date', today);
+        resolve(weather);
+      })
+      .catch(() => {
+        resolve(cached || null);
+      });
+  });
+}
+
+// 天気文字列から4択正解を判定するためのカテゴリに変換
+function weatherToCategory(weatherStr) {
+  if (!weatherStr) return null;
+  if (weatherStr.includes('晴')) return '晴れ';
+  if (weatherStr.includes('くもり') || weatherStr.includes('曇')) return 'くもり';
+  if (weatherStr.includes('雨') || weatherStr.includes('にわか雨')) return '雨';
+  if (weatherStr.includes('雪')) return '雪';
+  return null;
+}
+
+function initDateWeather() {
+  // --- 要素取得 ---
+  const phaseDate    = document.getElementById('dw-phase-date');
+  const phaseWeather = document.getElementById('dw-phase-weather');
+  const phaseSummary = document.getElementById('dw-phase-summary');
+  const monthDisplay = document.getElementById('dw-month-display');
+  const dayDisplay   = document.getElementById('dw-day-display');
+  const weekdayDisplay = document.getElementById('dw-weekday-display');
+  const btnConfirm   = document.getElementById('btn-dw-confirm');
+  const quizGrid     = document.getElementById('weather-quiz-grid');
+  const quizResult   = document.getElementById('weather-quiz-result');
+  const quizResultIcon = document.getElementById('quiz-result-icon');
+  const quizResultText = document.getElementById('quiz-result-text');
+  const btnNext      = document.getElementById('btn-dw-next');
+  const summaryText  = document.getElementById('dw-summary-text');
+  const btnRetry     = document.getElementById('btn-dw-retry');
+
+  if (!phaseDate) return;
+
+  // --- スライダーの値範囲 ---
+  const MONTHS   = Array.from({ length: 12 }, (_, i) => i + 1);   // 1〜12
+  const DAYS     = Array.from({ length: 31 }, (_, i) => i + 1);   // 1〜31
+  const WEEKDAY_LIST = [...WEEKDAYS];                               // 日〜土
+
+  // --- 現在の選択インデックス（初期値はランダム） ---
+  let monthIdx   = Math.floor(Math.random() * MONTHS.length);
+  let dayIdx     = Math.floor(Math.random() * DAYS.length);
+  let weekdayIdx = Math.floor(Math.random() * WEEKDAY_LIST.length);
+
+  function updateDisplay() {
+    monthDisplay.textContent   = MONTHS[monthIdx];
+    dayDisplay.textContent     = DAYS[dayIdx];
+    weekdayDisplay.textContent = WEEKDAY_LIST[weekdayIdx];
+  }
+  updateDisplay();
+
+  // --- ▲▼ ボタンのイベント登録 ---
+  function wrapIdx(idx, len) {
+    return (idx + len) % len;
+  }
+
+  document.querySelectorAll('.dw-arrow').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      const dir    = btn.classList.contains('dw-arrow-up') ? -1 : 1;
+
+      if (target === 'month') {
+        monthIdx = wrapIdx(monthIdx + dir, MONTHS.length);
+      } else if (target === 'day') {
+        dayIdx = wrapIdx(dayIdx + dir, DAYS.length);
+      } else if (target === 'weekday') {
+        weekdayIdx = wrapIdx(weekdayIdx + dir, WEEKDAY_LIST.length);
+      }
+      updateDisplay();
+    });
+  });
+
+  // --- フェーズ切り替え ---
+  function showDwPhase(phase) {
+    [phaseDate, phaseWeather, phaseSummary].forEach(p => {
+      if (p) p.classList.add('hidden');
+    });
+    if (phase) phase.classList.remove('hidden');
+  }
+
+  // --- 選んだ日付を記憶 ---
+  let selectedMonth   = null;
+  let selectedDay     = null;
+  let selectedWeekday = null;
+  let todayWeather    = null;
+
+  // --- 「確認！」ボタン → フェーズ② ---
+  btnConfirm.addEventListener('click', async () => {
+    selectedMonth   = MONTHS[monthIdx];
+    selectedDay     = DAYS[dayIdx];
+    selectedWeekday = WEEKDAY_LIST[weekdayIdx];
+
+    // 天気取得（非同期）
+    todayWeather = await fetchTodayWeather();
+
+    // クイズボタンをリセット
+    document.querySelectorAll('.weather-quiz-btn').forEach(b => {
+      b.disabled = false;
+      b.classList.remove('correct', 'wrong');
+    });
+    quizResult.classList.add('hidden');
+
+    showDwPhase(phaseWeather);
+  });
+
+  // --- 天気クイズの回答 ---
+  document.querySelectorAll('.weather-quiz-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer   = btn.dataset.weather;
+      const correct  = weatherToCategory(todayWeather);
+
+      // 全ボタン無効化
+      document.querySelectorAll('.weather-quiz-btn').forEach(b => b.disabled = true);
+
+      if (answer === correct) {
+        btn.classList.add('correct');
+        quizResultIcon.textContent = '⭕';
+        quizResultText.textContent = `せいかい！今日は${todayWeather}だよ！`;
+      } else {
+        btn.classList.add('wrong');
+        // 正解のボタンも光らせる
+        document.querySelectorAll('.weather-quiz-btn').forEach(b => {
+          if (b.dataset.weather === correct) b.classList.add('correct');
+        });
+        quizResultIcon.textContent = '❌';
+        quizResultText.textContent = `ざんねん！正解は${todayWeather}だよ！`;
+      }
+
+      quizResult.classList.remove('hidden');
+    });
+  });
+
+  // --- 「次へ」ボタン → フェーズ③ ---
+  btnNext.addEventListener('click', () => {
+    const weatherLabel = todayWeather || '？';
+    summaryText.innerHTML =
+      `今日は<br><strong>${selectedMonth}月${selectedDay}日（${selectedWeekday}曜日）</strong><br>天気は<strong>${weatherLabel}</strong>です！`;
+    showDwPhase(phaseSummary);
+  });
+
+  // --- 「もう一度」ボタン → リセット ---
+  btnRetry.addEventListener('click', () => {
+    // ランダムに再設定
+    monthIdx   = Math.floor(Math.random() * MONTHS.length);
+    dayIdx     = Math.floor(Math.random() * DAYS.length);
+    weekdayIdx = Math.floor(Math.random() * WEEKDAY_LIST.length);
+    updateDisplay();
+    showDwPhase(phaseDate);
+  });
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 renderDots(0);
 initReikoElements();
 initVoiceElements();
+initDateWeather();
