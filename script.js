@@ -302,6 +302,163 @@ btnAdminClose.addEventListener('click', () => {
 });
 
 // ----------------------------------------
+// 号令ミニアプリ - 声測定（Web Audio API）
+// ----------------------------------------
+
+// 測定設定
+const MEASURE_SEC      = 3;    // 測定時間（秒）
+const COUNTDOWN_SEC    = 3;    // カウントダウン秒数
+
+// 状態
+let audioContext    = null;
+let analyser        = null;
+let micStream       = null;
+let measureInterval = null;
+let maxVolume       = 0;       // 測定中の最大音量（0〜255）
+
+// フェーズ要素
+const phaseReady     = document.getElementById('voice-phase-ready');
+const phaseCountdown = document.getElementById('voice-phase-countdown');
+const phaseMeasuring = document.getElementById('voice-phase-measuring');
+const phaseResult    = document.getElementById('voice-phase-result');
+const countdownNum   = document.getElementById('countdown-number');
+const volumeFill     = document.getElementById('volume-meter-fill');
+const measureTimer   = document.getElementById('measure-timer');
+const resultScore    = document.getElementById('result-score');
+const resultMessage  = document.getElementById('result-message');
+const btnVoiceStart  = document.getElementById('btn-voice-start');
+const btnVoiceRetry  = document.getElementById('btn-voice-retry');
+
+// フェーズ切り替え
+function showVoicePhase(phase) {
+  [phaseReady, phaseCountdown, phaseMeasuring, phaseResult].forEach(p => {
+    p.classList.add('hidden');
+  });
+  phase.classList.remove('hidden');
+}
+
+// スタートボタン
+btnVoiceStart.addEventListener('click', async () => {
+  try {
+    await startMicAndCountdown();
+  } catch (e) {
+    alert('マイクの使用が許可されませんでした。\nSafariの設定でマイクを許可してください。');
+  }
+});
+
+// もう一度ボタン
+btnVoiceRetry.addEventListener('click', () => {
+  stopMic();
+  maxVolume = 0;
+  volumeFill.style.width = '0%';
+  showVoicePhase(phaseReady);
+});
+
+// マイク起動 → カウントダウン → 測定
+async function startMicAndCountdown() {
+  // マイク許可・AudioContext生成
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioContext.createMediaStreamSource(micStream);
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  source.connect(analyser);
+
+  // カウントダウン開始
+  showVoicePhase(phaseCountdown);
+  let count = COUNTDOWN_SEC;
+  countdownNum.textContent = count;
+
+  const cdInterval = setInterval(() => {
+    count--;
+    if (count <= 0) {
+      clearInterval(cdInterval);
+      startMeasuring();
+    } else {
+      countdownNum.textContent = count;
+      // アニメーションを再起動
+      countdownNum.style.animation = 'none';
+      countdownNum.offsetHeight; // reflow
+      countdownNum.style.animation = 'countPop 0.4s ease';
+    }
+  }, 1000);
+}
+
+// 測定開始
+function startMeasuring() {
+  maxVolume = 0;
+  let remaining = MEASURE_SEC;
+  measureTimer.textContent = remaining;
+  showVoicePhase(phaseMeasuring);
+
+  const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+  // リアルタイム音量バー更新（60fps相当）
+  measureInterval = setInterval(() => {
+    analyser.getByteFrequencyData(dataArray);
+    const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+    const pct = Math.min(avg / 80 * 100, 100); // 80を基準に正規化
+    volumeFill.style.width = pct + '%';
+    if (avg > maxVolume) maxVolume = avg;
+  }, 16);
+
+  // 1秒ごとにタイマー更新
+  let timerCount = MEASURE_SEC;
+  const timerInterval = setInterval(() => {
+    timerCount--;
+    measureTimer.textContent = timerCount;
+    if (timerCount <= 0) {
+      clearInterval(timerInterval);
+      clearInterval(measureInterval);
+      stopMic();
+      showResult();
+    }
+  }, 1000);
+}
+
+// 結果表示
+function showResult() {
+  // maxVolume（0〜約80以上）を100点満点にスケール
+  const score = Math.min(Math.round((maxVolume / 75) * 100), 100);
+  resultScore.textContent = score;
+
+  // メッセージとカラー
+  let msg = '';
+  let color = '';
+  if (score >= 90) {
+    msg = '🌟 すごい！さいこうの声だ！';
+    color = '#ff9a3c';
+  } else if (score >= 70) {
+    msg = '😊 よかった！元気な声だね！';
+    color = '#06d6a0';
+  } else if (score >= 50) {
+    msg = '👍 もうちょっと！大きな声で！';
+    color = '#4a9eda';
+  } else {
+    msg = '😮 もっと大きな声で言えるかな？';
+    color = '#b0bec5';
+  }
+  resultMessage.textContent = msg;
+  resultMessage.style.color = color;
+
+  showVoicePhase(phaseResult);
+}
+
+// マイク停止・リソース解放
+function stopMic() {
+  clearInterval(measureInterval);
+  if (micStream) {
+    micStream.getTracks().forEach(t => t.stop());
+    micStream = null;
+  }
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  analyser = null;
+}
+
+// ----------------------------------------
 // 初期化：プログレスドットを生成
 // ----------------------------------------
 renderDots(0);

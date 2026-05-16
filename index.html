@@ -75,6 +75,49 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「これから朝の会を始めます。」</p>
+
+              <!-- 声測定エリア -->
+              <div class="voice-area">
+
+                <!-- フェーズ①：スタートボタン -->
+                <div class="voice-phase" id="voice-phase-ready">
+                  <p class="voice-guide">元気よく言えるかな？<br>ボタンをおして、みんなで言ってみよう！</p>
+                  <button id="btn-voice-start" class="btn-voice-start">🎤 はかってみる！</button>
+                </div>
+
+                <!-- フェーズ②：カウントダウン -->
+                <div class="voice-phase hidden" id="voice-phase-countdown">
+                  <p class="voice-guide">いくよ！</p>
+                  <div class="countdown-number" id="countdown-number">3</div>
+                </div>
+
+                <!-- フェーズ③：測定中 -->
+                <div class="voice-phase hidden" id="voice-phase-measuring">
+                  <p class="voice-guide">「これから朝の会を始めます！」</p>
+                  <div class="volume-meter-wrap">
+                    <div class="volume-meter-bar">
+                      <div class="volume-meter-fill" id="volume-meter-fill"></div>
+                    </div>
+                    <div class="volume-labels">
+                      <span>しずか</span>
+                      <span>ふつう</span>
+                      <span>でかい！</span>
+                    </div>
+                  </div>
+                  <div class="measure-timer" id="measure-timer">3</div>
+                </div>
+
+                <!-- フェーズ④：結果表示 -->
+                <div class="voice-phase hidden" id="voice-phase-result">
+                  <div class="result-score-wrap">
+                    <div class="result-score" id="result-score">0</div>
+                    <div class="result-label">点！</div>
+                  </div>
+                  <div class="result-message" id="result-message"></div>
+                  <button id="btn-voice-retry" class="btn-secondary btn-retry">もう一度</button>
+                </div>
+
+              </div>
             </div>
           </div>
 

@@ -337,6 +337,169 @@ html, body {
 }
 
 /* ========================================
+   ① 号令ミニアプリ - 声測定
+======================================== */
+.voice-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.voice-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.voice-phase.hidden {
+  display: none;
+}
+
+.voice-guide {
+  font-size: 20px;
+  color: var(--color-navy);
+  text-align: center;
+  line-height: 1.7;
+  font-weight: bold;
+}
+
+/* スタートボタン */
+.btn-voice-start {
+  background: linear-gradient(135deg, #06d6a0, #02a87e);
+  color: var(--color-white);
+  border: none;
+  border-radius: 50px;
+  padding: 20px 52px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(6,214,160,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.btn-voice-start:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(6,214,160,0.5);
+}
+
+.btn-voice-start:active {
+  transform: translateY(0);
+  animation: none;
+}
+
+/* カウントダウン数字 */
+.countdown-number {
+  font-size: 120px;
+  font-weight: bold;
+  color: var(--color-sunrise);
+  line-height: 1;
+  text-shadow: 0 4px 16px rgba(255,154,60,0.4);
+  animation: countPop 0.4s ease;
+}
+
+/* 音量メーター */
+.volume-meter-wrap {
+  width: 90%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.volume-meter-bar {
+  width: 100%;
+  height: 40px;
+  background: var(--color-gray-light);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.volume-meter-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #06d6a0, #ffd166, #ff6b6b);
+  transition: width 0.08s ease;
+}
+
+.volume-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-light);
+  padding: 0 4px;
+}
+
+/* 測定タイマー */
+.measure-timer {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--color-blue);
+  line-height: 1;
+}
+
+/* 結果表示 */
+.result-score-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.result-score {
+  font-size: 96px;
+  font-weight: bold;
+  color: var(--color-sunrise);
+  line-height: 1;
+  text-shadow: 0 4px 16px rgba(255,154,60,0.3);
+  animation: scorePopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.result-label {
+  font-size: 36px;
+  font-weight: bold;
+  color: var(--color-navy);
+  padding-bottom: 12px;
+}
+
+.result-message {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  padding: 12px 28px;
+  border-radius: 16px;
+  background: var(--color-white);
+  box-shadow: var(--shadow);
+}
+
+.btn-retry {
+  margin-top: 4px;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+
+@keyframes countPop {
+  from { transform: scale(1.4); opacity: 0.5; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes scorePopIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ========================================
    ② 挨拶ミニアプリ
 ======================================== */
 .greeting-box {
