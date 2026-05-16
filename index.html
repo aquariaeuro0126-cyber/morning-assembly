@@ -75,8 +75,41 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「これから朝の会を始めます。」</p>
-              <div class="placeholder-box">
-                <p>号令ミニアプリ（開発予定）</p>
+
+              <!-- 号令タイミングライト -->
+              <div class="reiko-area">
+
+                <!-- フェーズ①：スタート -->
+                <div class="reiko-phase" id="reiko-phase-ready">
+                  <p class="reiko-guide">ボタンをおして号令をかけよう！</p>
+                  <button id="btn-reiko-start" class="btn-reiko-start">🔔 気をつけ！</button>
+                </div>
+
+                <!-- フェーズ②：「気をつけ」表示＋カウントダウン -->
+                <div class="reiko-phase hidden" id="reiko-phase-kiotsuke">
+                  <div class="reiko-word" id="reiko-word-kiotsuke">気をつけ！</div>
+                  <div class="reiko-countdown-ring">
+                    <svg class="ring-svg" viewBox="0 0 120 120">
+                      <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                      <circle class="ring-progress" id="reiko-ring-progress" cx="60" cy="60" r="52"/>
+                    </svg>
+                    <div class="ring-number" id="reiko-ring-number">3</div>
+                  </div>
+                </div>
+
+                <!-- フェーズ③：「礼」表示 -->
+                <div class="reiko-phase hidden" id="reiko-phase-rei">
+                  <div class="reiko-word reiko-word-rei" id="reiko-word-rei">礼！</div>
+                  <button id="btn-reiko-naore" class="btn-reiko-naore">直れ！</button>
+                </div>
+
+                <!-- フェーズ④：完了 -->
+                <div class="reiko-phase hidden" id="reiko-phase-done">
+                  <div class="reiko-done-icon">✅</div>
+                  <p class="reiko-done-text">号令おわり！</p>
+                  <button id="btn-reiko-retry" class="btn-secondary">もう一度</button>
+                </div>
+
               </div>
             </div>
           </div>

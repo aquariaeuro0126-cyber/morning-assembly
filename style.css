@@ -832,3 +832,161 @@ html, body {
     font-size: 17px;
   }
 }
+
+/* ========================================
+   ① 号令ミニアプリ - タイミングライト
+======================================== */
+.reiko-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.reiko-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.reiko-phase.hidden {
+  display: none;
+}
+
+.reiko-guide {
+  font-size: 20px;
+  color: var(--color-navy);
+  font-weight: bold;
+  text-align: center;
+}
+
+/* 「気をつけ！」「礼！」の大きな文字 */
+.reiko-word {
+  font-size: 80px;
+  font-weight: bold;
+  color: var(--color-navy);
+  text-shadow: 0 4px 16px rgba(44,95,138,0.25);
+  animation: reikoWordPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  line-height: 1;
+}
+
+.reiko-word-rei {
+  font-size: 96px;
+  color: var(--color-sunrise);
+  text-shadow: 0 4px 20px rgba(255,154,60,0.4);
+}
+
+/* カウントダウンリング */
+.reiko-countdown-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.ring-svg {
+  width: 120px;
+  height: 120px;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: var(--color-gray-light);
+  stroke-width: 10;
+}
+
+.ring-progress {
+  fill: none;
+  stroke: var(--color-blue);
+  stroke-width: 10;
+  stroke-linecap: round;
+  /* 円周 = 2π×52 ≈ 326.7 */
+  stroke-dasharray: 326.7;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.ring-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 44px;
+  font-weight: bold;
+  color: var(--color-navy);
+  line-height: 1;
+}
+
+/* 「気をつけ！」スタートボタン */
+.btn-reiko-start {
+  background: linear-gradient(135deg, var(--color-navy), #3a7fc0);
+  color: var(--color-white);
+  border: none;
+  border-radius: 50px;
+  padding: 20px 52px;
+  font-size: 26px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(44,95,138,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.btn-reiko-start:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(44,95,138,0.45);
+}
+
+.btn-reiko-start:active {
+  transform: translateY(0);
+  animation: none;
+}
+
+/* 「直れ！」ボタン */
+.btn-reiko-naore {
+  background: linear-gradient(135deg, #ff9a3c, #e8851f);
+  color: var(--color-white);
+  border: none;
+  border-radius: 50px;
+  padding: 18px 52px;
+  font-size: 26px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,154,60,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.btn-reiko-naore:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(255,154,60,0.5);
+}
+
+.btn-reiko-naore:active {
+  transform: translateY(0);
+  animation: none;
+}
+
+/* 完了表示 */
+.reiko-done-icon {
+  font-size: 72px;
+  animation: scorePopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.reiko-done-text {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--color-green);
+}
+
+@keyframes reikoWordPop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}

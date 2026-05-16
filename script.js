@@ -469,7 +469,74 @@ function stopMic() {
 }
 
 // ----------------------------------------
+// 号令ミニアプリ - タイミングライト
+// ----------------------------------------
+
+// 礼までのカウントダウン秒数
+const REIKO_COUNTDOWN_SEC = 3;
+
+// SVGリングの円周（r=52 → 2π×52 ≈ 326.7）
+const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
+
+let reikoTimer = null;
+
+function initReikoElements() {
+  const reikoPhaseReady    = document.getElementById('reiko-phase-ready');
+  const reikoPhaseKiotsuke = document.getElementById('reiko-phase-kiotsuke');
+  const reikoPhaseRei      = document.getElementById('reiko-phase-rei');
+  const reikoPhaseDone     = document.getElementById('reiko-phase-done');
+  const ringProgress       = document.getElementById('reiko-ring-progress');
+  const ringNumber         = document.getElementById('reiko-ring-number');
+  const btnReikoStart      = document.getElementById('btn-reiko-start');
+  const btnReikoNaore      = document.getElementById('btn-reiko-naore');
+  const btnReikoRetry      = document.getElementById('btn-reiko-retry');
+
+  if (!btnReikoStart) return;
+
+  function showReikoPhase(phase) {
+    [reikoPhaseReady, reikoPhaseKiotsuke, reikoPhaseRei, reikoPhaseDone].forEach(p => {
+      if (p) p.classList.add('hidden');
+    });
+    if (phase) phase.classList.remove('hidden');
+  }
+
+  btnReikoStart.addEventListener('click', () => {
+    showReikoPhase(reikoPhaseKiotsuke);
+
+    // SVGリング初期化（満タン状態からスタート）
+    ringProgress.style.strokeDashoffset = '0';
+    let count = REIKO_COUNTDOWN_SEC;
+    ringNumber.textContent = count;
+
+    clearInterval(reikoTimer);
+    reikoTimer = setInterval(() => {
+      count--;
+      // リング進捗（0→円周でリングが消える）
+      const offset = ((REIKO_COUNTDOWN_SEC - count) / REIKO_COUNTDOWN_SEC) * RING_CIRCUMFERENCE;
+      ringProgress.style.strokeDashoffset = offset;
+      ringNumber.textContent = count;
+
+      if (count <= 0) {
+        clearInterval(reikoTimer);
+        showReikoPhase(reikoPhaseRei);
+      }
+    }, 1000);
+  });
+
+  btnReikoNaore.addEventListener('click', () => {
+    showReikoPhase(reikoPhaseDone);
+  });
+
+  btnReikoRetry.addEventListener('click', () => {
+    clearInterval(reikoTimer);
+    ringProgress.style.strokeDashoffset = '0';
+    showReikoPhase(reikoPhaseReady);
+  });
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 renderDots(0);
+initReikoElements();
 initVoiceElements();
