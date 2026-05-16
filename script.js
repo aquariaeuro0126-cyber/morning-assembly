@@ -599,24 +599,22 @@ function initDateWeather() {
   const quizResult   = document.getElementById('weather-quiz-result');
   const quizResultIcon = document.getElementById('quiz-result-icon');
   const quizResultText = document.getElementById('quiz-result-text');
-  const btnNext      = document.getElementById('btn-dw-next');
-  const summaryText  = document.getElementById('dw-summary-text');
-  const btnRetry     = document.getElementById('btn-dw-retry');
+  const btnNext        = document.getElementById('btn-dw-next');
+  const dwWeatherBtns  = document.getElementById('dw-weather-buttons');
+  const summaryText    = document.getElementById('dw-summary-text');
+  const btnRetry       = document.getElementById('btn-dw-retry');
 
   if (!phaseDate) return;
 
   // --- スライダーの値範囲 ---
-  const MONTHS   = Array.from({ length: 12 }, (_, i) => i + 1);   // 1〜12
-  const DAYS     = Array.from({ length: 31 }, (_, i) => i + 1);   // 1〜31
-  const WEEKDAY_LIST = [...WEEKDAYS];                               // 日〜土
+  const DAYS         = Array.from({ length: 31 }, (_, i) => i + 1);   // 1〜31
+  const WEEKDAY_LIST = [...WEEKDAYS];                                   // 日〜土
 
   // --- 現在の選択インデックス（初期値はランダム） ---
-  let monthIdx   = Math.floor(Math.random() * MONTHS.length);
   let dayIdx     = Math.floor(Math.random() * DAYS.length);
   let weekdayIdx = Math.floor(Math.random() * WEEKDAY_LIST.length);
 
   function updateDisplay() {
-    monthDisplay.textContent   = MONTHS[monthIdx];
     dayDisplay.textContent     = DAYS[dayIdx];
     weekdayDisplay.textContent = WEEKDAY_LIST[weekdayIdx];
   }
@@ -632,9 +630,7 @@ function initDateWeather() {
       const target = btn.dataset.target;
       const dir    = btn.classList.contains('dw-arrow-up') ? -1 : 1;
 
-      if (target === 'month') {
-        monthIdx = wrapIdx(monthIdx + dir, MONTHS.length);
-      } else if (target === 'day') {
+      if (target === 'day') {
         dayIdx = wrapIdx(dayIdx + dir, DAYS.length);
       } else if (target === 'weekday') {
         weekdayIdx = wrapIdx(weekdayIdx + dir, WEEKDAY_LIST.length);
@@ -652,14 +648,12 @@ function initDateWeather() {
   }
 
   // --- 選んだ日付を記憶 ---
-  let selectedMonth   = null;
   let selectedDay     = null;
   let selectedWeekday = null;
   let todayWeather    = null;
 
   // --- 「確認！」ボタン → フェーズ② ---
   btnConfirm.addEventListener('click', async () => {
-    selectedMonth   = MONTHS[monthIdx];
     selectedDay     = DAYS[dayIdx];
     selectedWeekday = WEEKDAY_LIST[weekdayIdx];
 
@@ -672,6 +666,7 @@ function initDateWeather() {
       b.classList.remove('correct', 'wrong');
     });
     quizResult.classList.add('hidden');
+    if (dwWeatherBtns) dwWeatherBtns.classList.add('hidden');
 
     showDwPhase(phaseWeather);
   });
@@ -700,6 +695,7 @@ function initDateWeather() {
       }
 
       quizResult.classList.remove('hidden');
+      if (dwWeatherBtns) dwWeatherBtns.classList.remove('hidden');
     });
   });
 
@@ -707,14 +703,13 @@ function initDateWeather() {
   btnNext.addEventListener('click', () => {
     const weatherLabel = todayWeather || '？';
     summaryText.innerHTML =
-      `今日は<br><strong>${selectedMonth}月${selectedDay}日（${selectedWeekday}曜日）</strong><br>天気は<strong>${weatherLabel}</strong>です！`;
+      `今日は<br><strong>${selectedDay}日（${selectedWeekday}曜日）</strong><br>天気は<strong>${weatherLabel}</strong>です！`;
     showDwPhase(phaseSummary);
   });
 
   // --- 「もう一度」ボタン → リセット ---
   btnRetry.addEventListener('click', () => {
     // ランダムに再設定
-    monthIdx   = Math.floor(Math.random() * MONTHS.length);
     dayIdx     = Math.floor(Math.random() * DAYS.length);
     weekdayIdx = Math.floor(Math.random() * WEEKDAY_LIST.length);
     updateDisplay();

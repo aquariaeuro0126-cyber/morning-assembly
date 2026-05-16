@@ -1199,3 +1199,17 @@ html, body {
   color: var(--color-navy);
   line-height: 1.7;
 }
+
+/* まとめ画面のボタン横並び */
+.dw-summary-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* 天気クイズの次へボタンエリア */
+.dw-weather-buttons {
+  display: flex;
+  justify-content: center;
+}
