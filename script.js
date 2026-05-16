@@ -1978,6 +1978,89 @@ function initAdminNichokuTalk() {
 }
 
 // ----------------------------------------
+// ⑧ 先生の話
+// ----------------------------------------
+function initSenseiTalk() {
+  // DOM
+  const phaseReady   = document.getElementById('sensei-phase-ready');
+  const phaseTalking = document.getElementById('sensei-phase-talking');
+  const phaseInput   = document.getElementById('sensei-phase-input');
+  const phaseResult  = document.getElementById('sensei-phase-result');
+
+  const btnStart   = document.getElementById('btn-sensei-start');
+  const btnDone    = document.getElementById('btn-sensei-done');
+  const btnConfirm = document.getElementById('btn-sensei-confirm');
+  const btnRetry   = document.getElementById('btn-sensei-retry');
+
+  const meateInput       = document.getElementById('sensei-meate-input');
+  const previewPlaceholder = document.getElementById('sensei-preview-placeholder');
+  const previewText        = document.getElementById('sensei-preview-text');
+  const inputError         = document.getElementById('sensei-input-error');
+  const resultMeate        = document.getElementById('sensei-result-meate');
+
+  function showSenseiPhase(phase) {
+    [phaseReady, phaseTalking, phaseInput, phaseResult].forEach(p => {
+      p.classList.add('hidden');
+    });
+    phase.classList.remove('hidden');
+  }
+
+  // フェーズ①→②：話をはじめる
+  btnStart.addEventListener('click', () => {
+    showSenseiPhase(phaseTalking);
+  });
+
+  // フェーズ②→③：話し終わりました
+  btnDone.addEventListener('click', () => {
+    // 入力欄をリセット
+    meateInput.value = '';
+    previewPlaceholder.classList.remove('hidden');
+    previewText.classList.add('hidden');
+    previewText.textContent = '';
+    inputError.classList.add('hidden');
+    showSenseiPhase(phaseInput);
+    // キーボードを自動で開く
+    setTimeout(() => meateInput.focus(), 100);
+  });
+
+  // 入力中にプレビューをリアルタイム更新
+  meateInput.addEventListener('input', () => {
+    const val = meateInput.value.trim();
+    if (val) {
+      previewText.textContent = val;
+      previewText.classList.remove('hidden');
+      previewPlaceholder.classList.add('hidden');
+    } else {
+      previewText.classList.add('hidden');
+      previewPlaceholder.classList.remove('hidden');
+    }
+    inputError.classList.add('hidden');
+  });
+
+  // Enterキーでも確定
+  meateInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') btnConfirm.click();
+  });
+
+  // フェーズ③→④：決定ボタン
+  btnConfirm.addEventListener('click', () => {
+    const val = meateInput.value.trim();
+    if (!val) {
+      inputError.classList.remove('hidden');
+      meateInput.focus();
+      return;
+    }
+    resultMeate.textContent = val;
+    showSenseiPhase(phaseResult);
+  });
+
+  // フェーズ④→①：もう一度
+  btnRetry.addEventListener('click', () => {
+    showSenseiPhase(phaseReady);
+  });
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 // 起動時はスタート画面 → 💡ボタンを表示
@@ -1995,3 +2078,4 @@ initSong();
 initAdminSong();
 initNichokuTalk();
 initAdminNichokuTalk();
+initSenseiTalk();

@@ -460,8 +460,51 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「先生の話です。先生お願いします。」</p>
-              <div class="placeholder-box">
-                <p>先生の話ミニアプリ（開発予定）</p>
+
+              <div class="sensei-area">
+
+                <!-- フェーズ①：スタート -->
+                <div class="sensei-phase" id="sensei-phase-ready">
+                  <p class="sensei-guide">先生がお話をします。<br>ボタンをおして始めましょう！</p>
+                  <button id="btn-sensei-start" class="btn-sensei-start">👩‍🏫 話をはじめる</button>
+                </div>
+
+                <!-- フェーズ②：話し中 -->
+                <div class="sensei-phase hidden" id="sensei-phase-talking">
+                  <div class="sensei-talking-icon">👩‍🏫</div>
+                  <p class="sensei-talking-text">先生がお話ちゅうです。<br>しっかり聞きましょう！</p>
+                  <button id="btn-sensei-done" class="btn-sensei-done">✅ 話し終わりました</button>
+                </div>
+
+                <!-- フェーズ③：めあて入力 -->
+                <div class="sensei-phase hidden" id="sensei-phase-input">
+                  <div class="sensei-input-preview" id="sensei-input-preview">
+                    <span class="sensei-preview-placeholder" id="sensei-preview-placeholder">ここに今日のめあてが表示されます</span>
+                    <span class="sensei-preview-text hidden" id="sensei-preview-text"></span>
+                  </div>
+                  <p class="sensei-guide">今日のめあてを入力しましょう！</p>
+                  <div class="sensei-input-area">
+                    <input
+                      type="text"
+                      id="sensei-meate-input"
+                      class="sensei-input"
+                      placeholder="例：話をよく聞く"
+                      maxlength="40"
+                    />
+                    <button id="btn-sensei-confirm" class="btn-sensei-confirm">決定 ✅</button>
+                  </div>
+                  <p class="sensei-input-error hidden" id="sensei-input-error">めあてを入力してください</p>
+                </div>
+
+                <!-- フェーズ④：めあて表示 -->
+                <div class="sensei-phase hidden" id="sensei-phase-result">
+                  <p class="sensei-guide">今日のめあて</p>
+                  <div class="sensei-result-box">
+                    <div class="sensei-result-meate" id="sensei-result-meate"></div>
+                  </div>
+                  <button id="btn-sensei-retry" class="btn-secondary">もう一度</button>
+                </div>
+
               </div>
             </div>
           </div>
