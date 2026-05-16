@@ -658,13 +658,37 @@ function initDateWeather() {
   let selectedWeekday = null;
   let todayWeather    = null;
 
-  // --- 「確認！」ボタン → フェーズ② ---
+  // --- 「確認！」ボタン → 正誤判定 → フェーズ② or 「惜しい！」 ---
+  const oshiiEl = document.getElementById('dw-oshii');
+
   btnConfirm.addEventListener('click', async () => {
     selectedMonth   = MONTHS[monthIdx];
     selectedDay     = DAYS[dayIdx];
     selectedWeekday = WEEKDAY_LIST[weekdayIdx];
 
-    // 天気取得（非同期）
+    // 今日の実際の日付を取得して比較
+    const now          = new Date();
+    const todayMonth   = now.getMonth() + 1;          // 1〜12
+    const todayDay     = now.getDate();                // 1〜31
+    const todayWeekday = WEEKDAYS[now.getDay()];       // '日'〜'土'
+
+    const isCorrect =
+      selectedMonth   === todayMonth   &&
+      selectedDay     === todayDay     &&
+      selectedWeekday === todayWeekday;
+
+    if (!isCorrect) {
+      // 不正解 → 「惜しい！」表示してフェーズ①に留まる
+      if (oshiiEl) {
+        oshiiEl.classList.remove('hidden');
+        // 2秒後に自動で非表示（次のトライに備える）
+        setTimeout(() => oshiiEl.classList.add('hidden'), 2000);
+      }
+      return;
+    }
+
+    // 正解 → 天気取得してフェーズ②へ
+    if (oshiiEl) oshiiEl.classList.add('hidden');
     todayWeather = await fetchTodayWeather();
 
     // クイズボタンをリセット
@@ -721,6 +745,7 @@ function initDateWeather() {
     dayIdx     = Math.floor(Math.random() * DAYS.length);
     weekdayIdx = Math.floor(Math.random() * WEEKDAY_LIST.length);
     updateDisplay();
+    if (oshiiEl) oshiiEl.classList.add('hidden');
     showDwPhase(phaseDate);
   });
 }
