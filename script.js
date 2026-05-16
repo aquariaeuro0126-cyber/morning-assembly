@@ -1715,6 +1715,269 @@ function initAdminSong() {
 }
 
 // ----------------------------------------
+// ⑦ 日直の話ミニアプリ
+// ----------------------------------------
+
+const NICHOKU_STORAGE_KEY = 'nichokuTopics';
+
+// デフォルトトピック（5個）
+const NICHOKU_DEFAULT_TOPICS = [
+  '今日楽しみなこと',
+  '最近はまっていること',
+  '好きな食べ物',
+  '週末にしたこと',
+  'おすすめしたいもの'
+];
+
+function initNichokuTalk() {
+  const phaseReady    = document.getElementById('nichoku-phase-ready');
+  const phaseSpinning = document.getElementById('nichoku-phase-spinning');
+  const phaseResult   = document.getElementById('nichoku-phase-result');
+
+  const topicsPreview   = document.getElementById('nichoku-topics-preview');
+  const btnSpin         = document.getElementById('btn-nichoku-spin');
+  const rouletteDrum    = document.getElementById('roulette-drum');
+  const resultTopic     = document.getElementById('nichoku-result-topic');
+  const btnRetry        = document.getElementById('btn-nichoku-retry');
+
+  if (!phaseReady) return;
+
+  // --- データ読み込み ---
+  function loadTopics() {
+    try {
+      const data = JSON.parse(localStorage.getItem(NICHOKU_STORAGE_KEY));
+      return (Array.isArray(data) && data.length > 0) ? data : [...NICHOKU_DEFAULT_TOPICS];
+    } catch {
+      return [...NICHOKU_DEFAULT_TOPICS];
+    }
+  }
+
+  // --- フェーズ切り替え ---
+  function showNichokuPhase(phase) {
+    [phaseReady, phaseSpinning, phaseResult].forEach(p => {
+      if (p) p.classList.add('hidden');
+    });
+    if (phase) phase.classList.remove('hidden');
+  }
+
+  // --- スタート画面のトピックプレビューを更新 ---
+  function refreshReady() {
+    const topics = loadTopics();
+    topicsPreview.innerHTML = '';
+    topics.forEach(t => {
+      const chip = document.createElement('span');
+      chip.className = 'nichoku-topic-chip';
+      chip.textContent = t;
+      topicsPreview.appendChild(chip);
+    });
+  }
+
+  // --- ルーレット実行 ---
+  btnSpin.addEventListener('click', () => {
+    const topics = loadTopics();
+    if (topics.length === 0) return;
+
+    // 選ばれるインデックスを事前に決定
+    const winIndex = Math.floor(Math.random() * topics.length);
+
+    // ドラムにアイテムを並べる
+    // 十分な数のコピーを用意してスクロール感を出す
+    const REPEAT = 5; // 5周分
+    rouletteDrum.innerHTML = '';
+    const totalItems = topics.length * REPEAT;
+    for (let i = 0; i < totalItems; i++) {
+      const item = document.createElement('div');
+      item.className = 'roulette-drum-item';
+      item.textContent = topics[i % topics.length];
+      rouletteDrum.appendChild(item);
+    }
+
+    // ドラムを一番上に戻す
+    rouletteDrum.style.transition = 'none';
+    rouletteDrum.style.transform  = 'translateY(0)';
+
+    showNichokuPhase(phaseSpinning);
+
+    // アニメーション設定
+    const ITEM_HEIGHT  = 64; // px（CSSの .roulette-drum-item の height と一致）
+    const WINDOW_H     = 200; // px（.roulette-drum-window の height）
+    const CENTER_OFFSET = (WINDOW_H / 2) - (ITEM_HEIGHT / 2); // 68px
+
+    // 最終的に止まるアイテムのインデックス（最終周 + winIndex）
+    const finalIndex   = topics.length * (REPEAT - 1) + winIndex;
+    const finalY       = finalIndex * ITEM_HEIGHT - CENTER_OFFSET;
+
+    // 段階的に加速→減速するアニメーション
+    let currentY = 0;
+    let speed    = 8;   // 初速（px/フレーム）
+    const maxSpeed = 40; // 最高速
+    const accelFrames  = 30;  // 加速フレーム数
+    const totalDist    = finalY;
+    let frame = 0;
+    let raf;
+
+    function animate() {
+      // 加速フェーズ
+      if (frame < accelFrames) {
+        speed = 8 + (maxSpeed - 8) * (frame / accelFrames);
+      }
+
+      const remaining = totalDist - currentY;
+
+      // 残り距離が少ない場合は減速
+      if (remaining <= ITEM_HEIGHT * topics.length) {
+        speed = Math.max(4, remaining / (ITEM_HEIGHT * topics.length) * maxSpeed);
+      }
+
+      currentY += speed;
+
+      if (currentY >= finalY) {
+        currentY = finalY;
+        rouletteDrum.style.transform = `translateY(-${currentY}px)`;
+
+        // 当選アイテムにクラス付与
+        const items = rouletteDrum.querySelectorAll('.roulette-drum-item');
+        items.forEach((el, i) => {
+          el.classList.toggle('selected', i === finalIndex);
+        });
+
+        // 0.5秒後に結果画面へ
+        setTimeout(() => {
+          resultTopic.textContent = topics[winIndex];
+          showNichokuPhase(phaseResult);
+        }, 500);
+        return;
+      }
+
+      rouletteDrum.style.transform = `translateY(-${currentY}px)`;
+      frame++;
+      raf = requestAnimationFrame(animate);
+    }
+
+    // 描画が落ち着いてからスタート
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        raf = requestAnimationFrame(animate);
+      });
+    });
+  });
+
+  // --- 「もう一度回す」ボタン ---
+  btnRetry.addEventListener('click', () => {
+    refreshReady();
+    showNichokuPhase(phaseReady);
+  });
+
+  // 管理画面変更を反映
+  document.addEventListener('nichoku-updated', refreshReady);
+
+  // 初回表示
+  refreshReady();
+}
+
+// ----------------------------------------
+// 管理画面 — 日直トピック管理
+// ----------------------------------------
+function initAdminNichokuTalk() {
+  const topicInput   = document.getElementById('admin-topic-input');
+  const btnAdd       = document.getElementById('btn-admin-topic-add');
+  const topicError   = document.getElementById('admin-topic-error');
+  const topicCountEl = document.getElementById('admin-topic-count');
+  const topicList    = document.getElementById('admin-topic-list');
+  const topicEmptyEl = document.getElementById('admin-topic-empty');
+  const btnReset     = document.getElementById('btn-admin-topic-reset');
+
+  if (!btnAdd) return;
+
+  function loadTopics() {
+    try {
+      const data = JSON.parse(localStorage.getItem(NICHOKU_STORAGE_KEY));
+      return (Array.isArray(data) && data.length > 0) ? data : [...NICHOKU_DEFAULT_TOPICS];
+    } catch {
+      return [...NICHOKU_DEFAULT_TOPICS];
+    }
+  }
+
+  function saveTopics(list) {
+    localStorage.setItem(NICHOKU_STORAGE_KEY, JSON.stringify(list));
+  }
+
+  function renderTopicList() {
+    const list = loadTopics();
+    topicCountEl.textContent = `${list.length}件登録中`;
+
+    // 動的生成アイテムだけ削除（emptyアイテムは残す）
+    Array.from(topicList.children).forEach(li => {
+      if (li !== topicEmptyEl) li.remove();
+    });
+
+    if (list.length === 0) {
+      topicEmptyEl.style.display = '';
+    } else {
+      topicEmptyEl.style.display = 'none';
+      list.forEach((topic, i) => {
+        const li = document.createElement('li');
+
+        const span = document.createElement('span');
+        span.textContent = topic;
+        span.style.flex = '1';
+        span.style.fontSize = '15px';
+
+        const delBtn = document.createElement('button');
+        delBtn.className   = 'btn-admin-remove';
+        delBtn.textContent = '削除';
+        delBtn.addEventListener('click', () => {
+          const updated = loadTopics();
+          updated.splice(i, 1);
+          saveTopics(updated);
+          renderTopicList();
+          document.dispatchEvent(new CustomEvent('nichoku-updated'));
+        });
+
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        topicList.appendChild(li);
+      });
+    }
+  }
+
+  // トピック追加
+  btnAdd.addEventListener('click', () => {
+    const val = topicInput.value.trim();
+    if (!val) {
+      topicError.classList.remove('hidden');
+      return;
+    }
+    topicError.classList.add('hidden');
+
+    const list = loadTopics();
+    list.push(val);
+    saveTopics(list);
+    topicInput.value = '';
+    renderTopicList();
+    document.dispatchEvent(new CustomEvent('nichoku-updated'));
+  });
+
+  // Enterキーでも追加
+  topicInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') btnAdd.click();
+  });
+
+  // デフォルトに戻す
+  btnReset.addEventListener('click', () => {
+    saveTopics([...NICHOKU_DEFAULT_TOPICS]);
+    renderTopicList();
+    document.dispatchEvent(new CustomEvent('nichoku-updated'));
+  });
+
+  // 管理画面を開くたびに再描画
+  document.addEventListener('admin-opened', renderTopicList);
+
+  // 初回
+  renderTopicList();
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 // 起動時はスタート画面 → 💡ボタンを表示
@@ -1730,3 +1993,5 @@ initKyushoku();
 initAdminKyushoku();
 initSong();
 initAdminSong();
+initNichokuTalk();
+initAdminNichokuTalk();

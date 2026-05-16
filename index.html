@@ -413,8 +413,41 @@
             </div>
             <div class="mini-app-body">
               <p class="script-text">「日直の話です。」</p>
-              <div class="placeholder-box">
-                <p>日直の話ミニアプリ（開発予定）</p>
+
+              <div class="nichoku-area">
+
+                <!-- フェーズ①：スタート -->
+                <div class="nichoku-phase" id="nichoku-phase-ready">
+                  <p class="nichoku-guide">ルーレットを回して、今日の話のトピックを決めよう！</p>
+                  <div class="nichoku-topics-preview" id="nichoku-topics-preview">
+                    <!-- JS で動的生成 -->
+                  </div>
+                  <button id="btn-nichoku-spin" class="btn-nichoku-spin">🎰 ルーレットを回す！</button>
+                </div>
+
+                <!-- フェーズ②：ルーレット回転中 -->
+                <div class="nichoku-phase hidden" id="nichoku-phase-spinning">
+                  <p class="nichoku-guide">🎰 トピックを選んでいます…</p>
+                  <div class="roulette-drum-wrap">
+                    <div class="roulette-drum-window">
+                      <div class="roulette-drum" id="roulette-drum">
+                        <!-- JS で動的生成 -->
+                      </div>
+                    </div>
+                    <div class="roulette-pointer"></div>
+                  </div>
+                </div>
+
+                <!-- フェーズ③：結果 -->
+                <div class="nichoku-phase hidden" id="nichoku-phase-result">
+                  <p class="nichoku-guide">📣 今日のトピックはこれ！</p>
+                  <div class="nichoku-result-box">
+                    <div class="nichoku-result-topic" id="nichoku-result-topic">トピック</div>
+                  </div>
+                  <p class="nichoku-result-msg">日直さん、お話しましょう！</p>
+                  <button id="btn-nichoku-retry" class="btn-secondary">もう一度回す</button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -562,6 +595,31 @@
                 <li class="admin-name-empty" id="admin-song-fav-empty">まだ曲が登録されていません</li>
               </ul>
             </div>
+          </div>
+        </section>
+
+        <!-- 日直の話：トピック管理 -->
+        <section class="admin-section">
+          <h2 class="admin-section-title">🗣️ 日直の話 — トピック管理</h2>
+          <p class="admin-section-desc">ルーレットで選ぶトピックを登録します。</p>
+
+          <!-- トピック追加フォーム -->
+          <div class="admin-topic-form">
+            <input type="text" id="admin-topic-input" class="admin-topic-input"
+              placeholder="例：今日楽しみなこと" maxlength="40" />
+            <button id="btn-admin-topic-add" class="btn-admin-add">追加</button>
+          </div>
+          <p class="admin-topic-error hidden" id="admin-topic-error">トピックを入力してください</p>
+
+          <!-- 登録済みトピックリスト -->
+          <div class="admin-topic-list-wrap">
+            <div class="admin-topic-list-header">
+              <span id="admin-topic-count">0件登録中</span>
+              <button id="btn-admin-topic-reset" class="btn-admin-danger">デフォルトに戻す</button>
+            </div>
+            <ul class="admin-topic-list" id="admin-topic-list">
+              <li class="admin-name-empty" id="admin-topic-empty">トピックが登録されていません</li>
+            </ul>
           </div>
         </section>
 
