@@ -1010,6 +1010,10 @@ html, body {
   width: 100%;
 }
 
+.dw-phase.hidden {
+  display: none;
+}
+
 .dw-guide {
   font-size: 22px;
   font-weight: bold;
