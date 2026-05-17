@@ -1997,14 +1997,51 @@ function initSenseiTalk() {
 
   const btnStart   = document.getElementById('btn-sensei-start');
   const btnDone    = document.getElementById('btn-sensei-done');
-  const btnConfirm = document.getElementById('btn-sensei-confirm');
   const btnRetry   = document.getElementById('btn-sensei-retry');
 
-  const meateInput       = document.getElementById('sensei-meate-input');
   const previewPlaceholder = document.getElementById('sensei-preview-placeholder');
   const previewText        = document.getElementById('sensei-preview-text');
   const inputError         = document.getElementById('sensei-input-error');
   const resultMeate        = document.getElementById('sensei-result-meate');
+
+  // カスタムキーボード
+  const keyboard   = document.getElementById('sensei-keyboard');
+  const kbKeys     = keyboard.querySelectorAll('.kb-key[data-char]');
+  const kbDelete   = document.getElementById('kb-delete');
+  const kbConfirm  = document.getElementById('kb-confirm');
+
+  // 濁点・半濁点変換マップ
+  const DAKUTEN_MAP = {
+    'か':'が','き':'ぎ','く':'ぐ','け':'げ','こ':'ご',
+    'さ':'ざ','し':'じ','す':'ず','せ':'ぜ','そ':'ぞ',
+    'た':'だ','ち':'ぢ','つ':'づ','て':'で','と':'ど',
+    'は':'ば','ひ':'び','ふ':'ぶ','へ':'べ','ほ':'ぼ',
+    'う':'ゔ',
+  };
+  const HANDAKUTEN_MAP = {
+    'は':'ぱ','ひ':'ぴ','ふ':'ぷ','へ':'ぺ','ほ':'ぽ',
+  };
+
+  // 入力バッファ（表示テキスト）
+  let inputBuffer = '';
+
+  function updatePreview() {
+    if (inputBuffer) {
+      previewText.textContent = inputBuffer;
+      previewText.classList.remove('hidden');
+      previewPlaceholder.classList.add('hidden');
+    } else {
+      previewText.classList.add('hidden');
+      previewPlaceholder.classList.remove('hidden');
+    }
+    inputError.classList.add('hidden');
+  }
+
+  function resetInput() {
+    inputBuffer = '';
+    updatePreview();
+    inputError.classList.add('hidden');
+  }
 
   function showSenseiPhase(phase) {
     [phaseReady, phaseTalking, phaseInput, phaseResult].forEach(p => {
@@ -2013,6 +2050,71 @@ function initSenseiTalk() {
     phase.classList.remove('hidden');
   }
 
+  // カスタムキーボード：文字入力
+  kbKeys.forEach(key => {
+    key.addEventListener('click', () => {
+      const char = key.dataset.char;
+      if (char === '゛') {
+        // 直前の文字に濁点を付ける
+        if (inputBuffer.length > 0) {
+          const last = inputBuffer.slice(-1);
+          const dakuten = DAKUTEN_MAP[last];
+          if (dakuten) {
+            inputBuffer = inputBuffer.slice(0, -1) + dakuten;
+          } else if (Object.values(DAKUTEN_MAP).includes(last)) {
+            // 既に濁点あり → 元に戻す
+            const original = Object.keys(DAKUTEN_MAP).find(k => DAKUTEN_MAP[k] === last);
+            if (original) inputBuffer = inputBuffer.slice(0, -1) + original;
+          } else {
+            inputBuffer += char;
+          }
+        }
+      } else if (char === '゜') {
+        // 直前の文字に半濁点を付ける
+        if (inputBuffer.length > 0) {
+          const last = inputBuffer.slice(-1);
+          const handakuten = HANDAKUTEN_MAP[last];
+          if (handakuten) {
+            inputBuffer = inputBuffer.slice(0, -1) + handakuten;
+          } else if (Object.values(HANDAKUTEN_MAP).includes(last)) {
+            const original = Object.keys(HANDAKUTEN_MAP).find(k => HANDAKUTEN_MAP[k] === last);
+            if (original) inputBuffer = inputBuffer.slice(0, -1) + original;
+          } else {
+            inputBuffer += char;
+          }
+        }
+      } else if (char === '　') {
+        // 全角スペースは入力しない（スキップキー）
+      } else {
+        if (inputBuffer.length < 40) {
+          inputBuffer += char;
+        }
+      }
+      updatePreview();
+    });
+  });
+
+  // 削除キー
+  kbDelete.addEventListener('click', () => {
+    if (inputBuffer.length > 0) {
+      inputBuffer = inputBuffer.slice(0, -1);
+      updatePreview();
+    }
+  });
+
+  // 決定キー
+  function confirmInput() {
+    const val = inputBuffer.trim();
+    if (!val) {
+      inputError.classList.remove('hidden');
+      return;
+    }
+    resultMeate.textContent = val;
+    showSenseiPhase(phaseResult);
+  }
+
+  kbConfirm.addEventListener('click', confirmInput);
+
   // フェーズ①→②：話をはじめる
   btnStart.addEventListener('click', () => {
     showSenseiPhase(phaseTalking);
@@ -2020,46 +2122,8 @@ function initSenseiTalk() {
 
   // フェーズ②→③：話し終わりました
   btnDone.addEventListener('click', () => {
-    // 入力欄をリセット
-    meateInput.value = '';
-    previewPlaceholder.classList.remove('hidden');
-    previewText.classList.add('hidden');
-    previewText.textContent = '';
-    inputError.classList.add('hidden');
+    resetInput();
     showSenseiPhase(phaseInput);
-    // キーボードを自動で開く
-    setTimeout(() => meateInput.focus(), 100);
-  });
-
-  // 入力中にプレビューをリアルタイム更新
-  meateInput.addEventListener('input', () => {
-    const val = meateInput.value.trim();
-    if (val) {
-      previewText.textContent = val;
-      previewText.classList.remove('hidden');
-      previewPlaceholder.classList.add('hidden');
-    } else {
-      previewText.classList.add('hidden');
-      previewPlaceholder.classList.remove('hidden');
-    }
-    inputError.classList.add('hidden');
-  });
-
-  // Enterキーでも確定
-  meateInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') btnConfirm.click();
-  });
-
-  // フェーズ③→④：決定ボタン
-  btnConfirm.addEventListener('click', () => {
-    const val = meateInput.value.trim();
-    if (!val) {
-      inputError.classList.remove('hidden');
-      meateInput.focus();
-      return;
-    }
-    resultMeate.textContent = val;
-    showSenseiPhase(phaseResult);
   });
 
   // フェーズ④→①：もう一度

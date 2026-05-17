@@ -689,28 +689,96 @@
                     </span>
                     <span class="sensei-preview-text hidden" id="sensei-preview-text"></span>
                   </div>
-                  <p class="sensei-guide">
-                    <span class="kanji">今日のめあてを入力しましょう！</span>
-                    <span class="hiragana">きょうのめあてをにゅうりょくしましょう！</span>
-                  </p>
-                  <div class="sensei-input-area">
-                    <input
-                      type="text"
-                      id="sensei-meate-input"
-                      class="sensei-input"
-                      placeholder="例：話をよく聞く"
-                      maxlength="40"
-                    />
-                    <button id="btn-sensei-confirm" class="btn-sensei-confirm">
-                      <span class="kanji">決定</span>
-                      <span class="hiragana">けってい</span>
-                      ✅
-                    </button>
-                  </div>
                   <p class="sensei-input-error hidden" id="sensei-input-error">
                     <span class="kanji">めあてを入力してください</span>
                     <span class="hiragana">めあてをにゅうりょくしてください</span>
                   </p>
+                  <!-- カスタムキーボード -->
+                  <div class="sensei-keyboard" id="sensei-keyboard">
+                    <div class="kb-rows">
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="あ">あ</button>
+                        <button class="kb-key" data-char="い">い</button>
+                        <button class="kb-key" data-char="う">う</button>
+                        <button class="kb-key" data-char="え">え</button>
+                        <button class="kb-key" data-char="お">お</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="か">か</button>
+                        <button class="kb-key" data-char="き">き</button>
+                        <button class="kb-key" data-char="く">く</button>
+                        <button class="kb-key" data-char="け">け</button>
+                        <button class="kb-key" data-char="こ">こ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="さ">さ</button>
+                        <button class="kb-key" data-char="し">し</button>
+                        <button class="kb-key" data-char="す">す</button>
+                        <button class="kb-key" data-char="せ">せ</button>
+                        <button class="kb-key" data-char="そ">そ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="た">た</button>
+                        <button class="kb-key" data-char="ち">ち</button>
+                        <button class="kb-key" data-char="つ">つ</button>
+                        <button class="kb-key" data-char="て">て</button>
+                        <button class="kb-key" data-char="と">と</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="な">な</button>
+                        <button class="kb-key" data-char="に">に</button>
+                        <button class="kb-key" data-char="ぬ">ぬ</button>
+                        <button class="kb-key" data-char="ね">ね</button>
+                        <button class="kb-key" data-char="の">の</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="は">は</button>
+                        <button class="kb-key" data-char="ひ">ひ</button>
+                        <button class="kb-key" data-char="ふ">ふ</button>
+                        <button class="kb-key" data-char="へ">へ</button>
+                        <button class="kb-key" data-char="ほ">ほ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="ま">ま</button>
+                        <button class="kb-key" data-char="み">み</button>
+                        <button class="kb-key" data-char="む">む</button>
+                        <button class="kb-key" data-char="め">め</button>
+                        <button class="kb-key" data-char="も">も</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="や">や</button>
+                        <button class="kb-key kb-key-wide" data-char="　">　</button>
+                        <button class="kb-key" data-char="ゆ">ゆ</button>
+                        <button class="kb-key kb-key-wide" data-char="　">　</button>
+                        <button class="kb-key" data-char="よ">よ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="ら">ら</button>
+                        <button class="kb-key" data-char="り">り</button>
+                        <button class="kb-key" data-char="る">る</button>
+                        <button class="kb-key" data-char="れ">れ</button>
+                        <button class="kb-key" data-char="ろ">ろ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="わ">わ</button>
+                        <button class="kb-key" data-char="を">を</button>
+                        <button class="kb-key" data-char="ん">ん</button>
+                        <button class="kb-key" data-char="ー">ー</button>
+                        <button class="kb-key" data-char="っ">っ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key" data-char="゛">゛</button>
+                        <button class="kb-key" data-char="゜">゜</button>
+                        <button class="kb-key kb-key-wide" data-char=" ">スペース</button>
+                        <button class="kb-key kb-key-delete" id="kb-delete">⌫</button>
+                        <button class="kb-key kb-key-confirm" id="kb-confirm">
+                          <span class="kanji">決定</span>
+                          <span class="hiragana">けってい</span>
+                          ✅
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- フェーズ④：めあて表示 -->
