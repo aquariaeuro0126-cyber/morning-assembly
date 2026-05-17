@@ -2773,3 +2773,84 @@ html, body {
   word-break: break-all;
   line-height: 1.5;
 }
+
+/* ========================================
+   ひらがな / 漢字モード
+======================================== */
+
+/* モード出し分け */
+body[data-mode="kanji"] .hiragana { display: none; }
+body[data-mode="hiragana"] .kanji { display: none; }
+
+/* モード切り替えボタンのラッパー */
+.mode-switch-wrap {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* ボタン共通 */
+.btn-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 24px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  background: var(--color-white);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.1s, box-shadow 0.1s, border-color 0.15s, background 0.15s;
+  box-shadow: var(--shadow);
+}
+
+.btn-mode:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+}
+
+.btn-mode:active {
+  transform: scale(0.97);
+}
+
+/* アイコン（大きい文字） */
+.mode-icon {
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* ラベル */
+.mode-label {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* 漢字モードボタン（非アクティブ時は薄いブルー） */
+.btn-mode-kanji {
+  color: var(--color-navy);
+  border-color: var(--color-blue);
+}
+
+/* ひらがなモードボタン（非アクティブ時は薄いグリーン） */
+.btn-mode-hiragana {
+  color: var(--color-navy);
+  border-color: var(--color-green);
+}
+
+/* アクティブ状態 */
+.btn-mode-kanji.active {
+  background: var(--color-blue);
+  color: var(--color-white);
+  border-color: var(--color-blue);
+  box-shadow: 0 4px 16px rgba(74, 158, 218, 0.4);
+}
+
+.btn-mode-hiragana.active {
+  background: var(--color-green);
+  color: var(--color-white);
+  border-color: var(--color-green);
+  box-shadow: 0 4px 16px rgba(6, 214, 160, 0.4);
+}

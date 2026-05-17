@@ -6,15 +6,32 @@
   <title>朝の会</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body data-mode="kanji">
 
   <!-- ========== スタート画面 ========== -->
   <div id="screen-start" class="screen active">
     <div class="start-inner">
       <div class="start-icon" id="start-icon">🌅</div>
-      <h1 class="start-title">朝の会</h1>
-      <p class="start-subtitle">今日も元気にはじめよう！</p>
+      <h1 class="start-title">
+        <span class="kanji">朝の会</span>
+        <span class="hiragana">あさのかい</span>
+      </h1>
+      <p class="start-subtitle">
+        <span class="kanji">今日も元気にはじめよう！</span>
+        <span class="hiragana">きょうもげんきにはじめよう！</span>
+      </p>
       <button id="btn-start" class="btn-main">はじめる</button>
+      <!-- モード切り替えボタン -->
+      <div class="mode-switch-wrap">
+        <button id="btn-mode-kanji" class="btn-mode btn-mode-kanji active">
+          <span class="mode-icon">漢</span>
+          <span class="mode-label">漢字モード</span>
+        </button>
+        <button id="btn-mode-hiragana" class="btn-mode btn-mode-hiragana">
+          <span class="mode-icon">あ</span>
+          <span class="mode-label">ひらがなモード</span>
+        </button>
+      </div>
     </div>
     <!-- 管理画面トリガー：💡→🌅→💡 の順にタップ -->
     <button id="admin-trigger-bulb" class="admin-bulb-btn" aria-label="設定">💡</button>
@@ -26,39 +43,66 @@
 
       <!-- 左：垂直タブ -->
       <nav class="sidebar">
-        <div class="sidebar-title">朝の会</div>
+        <div class="sidebar-title">
+          <span class="kanji">朝の会</span>
+          <span class="hiragana">あさのかい</span>
+        </div>
         <ul class="tab-list" id="tab-list">
           <li class="tab-item active" data-index="0">
             <span class="tab-num">①</span>
-            <span class="tab-label">号令</span>
+            <span class="tab-label">
+              <span class="kanji">号令</span>
+              <span class="hiragana">ごうれい</span>
+            </span>
           </li>
           <li class="tab-item" data-index="1">
             <span class="tab-num">②</span>
-            <span class="tab-label">挨拶</span>
+            <span class="tab-label">
+              <span class="kanji">挨拶</span>
+              <span class="hiragana">あいさつ</span>
+            </span>
           </li>
           <li class="tab-item" data-index="2">
             <span class="tab-num">③</span>
-            <span class="tab-label">日付・天気</span>
+            <span class="tab-label">
+              <span class="kanji">日付・天気</span>
+              <span class="hiragana">ひづけ・てんき</span>
+            </span>
           </li>
           <li class="tab-item" data-index="3">
             <span class="tab-num">④</span>
-            <span class="tab-label">出席</span>
+            <span class="tab-label">
+              <span class="kanji">出席</span>
+              <span class="hiragana">しゅっせき</span>
+            </span>
           </li>
           <li class="tab-item" data-index="4">
             <span class="tab-num">⑤</span>
-            <span class="tab-label">給食</span>
+            <span class="tab-label">
+              <span class="kanji">給食</span>
+              <span class="hiragana">きゅうしょく</span>
+            </span>
           </li>
           <li class="tab-item" data-index="5">
             <span class="tab-num">⑥</span>
-            <span class="tab-label">歌</span>
+            <span class="tab-label">
+              <span class="kanji">歌</span>
+              <span class="hiragana">うた</span>
+            </span>
           </li>
           <li class="tab-item" data-index="6">
             <span class="tab-num">⑦</span>
-            <span class="tab-label">日直の話</span>
+            <span class="tab-label">
+              <span class="kanji">日直の話</span>
+              <span class="hiragana">にっちょくのはなし</span>
+            </span>
           </li>
           <li class="tab-item" data-index="7">
             <span class="tab-num">⑧</span>
-            <span class="tab-label">先生の話</span>
+            <span class="tab-label">
+              <span class="kanji">先生の話</span>
+              <span class="hiragana">せんせいのはなし</span>
+            </span>
           </li>
         </ul>
       </nav>
@@ -71,23 +115,36 @@
           <div class="mini-app active" data-index="0">
             <div class="mini-app-header">
               <span class="mini-app-icon">🔔</span>
-              <h2>号令</h2>
+              <h2>
+                <span class="kanji">号令</span>
+                <span class="hiragana">ごうれい</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「これから朝の会を始めます。」</p>
+              <p class="script-text">
+                「<span class="kanji">これから朝の会を始めます。</span><span class="hiragana">これからあさのかいをはじめます。</span>」
+              </p>
 
               <!-- 号令タイミングライト -->
               <div class="reiko-area">
 
                 <!-- フェーズ①：スタート -->
                 <div class="reiko-phase" id="reiko-phase-ready">
-                  <p class="reiko-guide">ボタンをおして号令をかけよう！</p>
-                  <button id="btn-reiko-start" class="btn-reiko-start">🔔 気をつけ！</button>
+                  <p class="reiko-guide">
+                    <span class="kanji">ボタンをおして号令をかけよう！</span>
+                    <span class="hiragana">ボタンをおしてごうれいをかけよう！</span>
+                  </p>
+                  <button id="btn-reiko-start" class="btn-reiko-start">
+                    🔔 <span class="kanji">気をつけ！</span><span class="hiragana">きをつけ！</span>
+                  </button>
                 </div>
 
                 <!-- フェーズ②：「気をつけ」表示＋カウントダウン -->
                 <div class="reiko-phase hidden" id="reiko-phase-kiotsuke">
-                  <div class="reiko-word" id="reiko-word-kiotsuke">気をつけ！</div>
+                  <div class="reiko-word" id="reiko-word-kiotsuke">
+                    <span class="kanji">気をつけ！</span>
+                    <span class="hiragana">きをつけ！</span>
+                  </div>
                   <div class="reiko-countdown-ring">
                     <svg class="ring-svg" viewBox="0 0 120 120">
                       <circle class="ring-bg" cx="60" cy="60" r="52"/>
@@ -99,14 +156,23 @@
 
                 <!-- フェーズ③：「礼」表示 -->
                 <div class="reiko-phase hidden" id="reiko-phase-rei">
-                  <div class="reiko-word reiko-word-rei" id="reiko-word-rei">礼！</div>
-                  <button id="btn-reiko-naore" class="btn-reiko-naore">直れ！</button>
+                  <div class="reiko-word reiko-word-rei" id="reiko-word-rei">
+                    <span class="kanji">礼！</span>
+                    <span class="hiragana">れい！</span>
+                  </div>
+                  <button id="btn-reiko-naore" class="btn-reiko-naore">
+                    <span class="kanji">直れ！</span>
+                    <span class="hiragana">なおれ！</span>
+                  </button>
                 </div>
 
                 <!-- フェーズ④：完了 -->
                 <div class="reiko-phase hidden" id="reiko-phase-done">
                   <div class="reiko-done-icon">✅</div>
-                  <p class="reiko-done-text">号令おわり！</p>
+                  <p class="reiko-done-text">
+                    <span class="kanji">号令おわり！</span>
+                    <span class="hiragana">ごうれいおわり！</span>
+                  </p>
                   <button id="btn-reiko-retry" class="btn-secondary">もう一度</button>
                 </div>
 
@@ -118,17 +184,25 @@
           <div class="mini-app" data-index="1">
             <div class="mini-app-header">
               <span class="mini-app-icon">👋</span>
-              <h2>挨拶</h2>
+              <h2>
+                <span class="kanji">挨拶</span>
+                <span class="hiragana">あいさつ</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「挨拶です。立ちましょう。」</p>
+              <p class="script-text">
+                「<span class="kanji">挨拶です。立ちましょう。</span><span class="hiragana">あいさつです。たちましょう。</span>」
+              </p>
 
               <!-- 声測定エリア -->
               <div class="voice-area">
 
                 <!-- フェーズ①：スタートボタン -->
                 <div class="voice-phase" id="voice-phase-ready">
-                  <p class="voice-guide">元気よく言えるかな？<br>ボタンをおして、みんなで言ってみよう！</p>
+                  <p class="voice-guide">
+                    <span class="kanji">元気よく言えるかな？<br>ボタンをおして、みんなで言ってみよう！</span>
+                    <span class="hiragana">げんきよくいえるかな？<br>ボタンをおして、みんなでいってみよう！</span>
+                  </p>
                   <button id="btn-voice-start" class="btn-voice-start">🎤 はかってみる！</button>
                 </div>
 
@@ -172,23 +246,34 @@
           <div class="mini-app" data-index="2">
             <div class="mini-app-header">
               <span class="mini-app-icon">📅</span>
-              <h2>日付・曜日・天気</h2>
+              <h2>
+                <span class="kanji">日付・曜日・天気</span>
+                <span class="hiragana">ひづけ・ようび・てんき</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「日付・曜日・天気です。」</p>
+              <p class="script-text">
+                「<span class="kanji">日付・曜日・天気です。</span><span class="hiragana">ひづけ・ようび・てんきです。</span>」
+              </p>
 
               <div class="dw-area">
 
                 <!-- フェーズ①：日付・曜日スライダー選択 -->
                 <div class="dw-phase" id="dw-phase-date">
-                  <p class="dw-guide">今日の日付と曜日をえらぼう！</p>
+                  <p class="dw-guide">
+                    <span class="kanji">今日の日付と曜日をえらぼう！</span>
+                    <span class="hiragana">きょうのひづけとようびをえらぼう！</span>
+                  </p>
                   <div class="dw-sliders">
 
                     <!-- 月 -->
                     <div class="dw-slider-col">
                       <button class="dw-arrow dw-arrow-up" data-target="month">▲</button>
                       <div class="dw-value-box" id="dw-month-display">4</div>
-                      <div class="dw-unit">月</div>
+                      <div class="dw-unit">
+                        <span class="kanji">月</span>
+                        <span class="hiragana">がつ</span>
+                      </div>
                       <button class="dw-arrow dw-arrow-down" data-target="month">▼</button>
                     </div>
 
@@ -196,7 +281,10 @@
                     <div class="dw-slider-col">
                       <button class="dw-arrow dw-arrow-up" data-target="day">▲</button>
                       <div class="dw-value-box" id="dw-day-display">1</div>
-                      <div class="dw-unit">日</div>
+                      <div class="dw-unit">
+                        <span class="kanji">日</span>
+                        <span class="hiragana">にち</span>
+                      </div>
                       <button class="dw-arrow dw-arrow-down" data-target="day">▼</button>
                     </div>
 
@@ -204,21 +292,34 @@
                     <div class="dw-slider-col">
                       <button class="dw-arrow dw-arrow-up" data-target="weekday">▲</button>
                       <div class="dw-value-box dw-value-box-wide" id="dw-weekday-display">月</div>
-                      <div class="dw-unit">曜日</div>
+                      <div class="dw-unit">
+                        <span class="kanji">曜日</span>
+                        <span class="hiragana">ようび</span>
+                      </div>
                       <button class="dw-arrow dw-arrow-down" data-target="weekday">▼</button>
                     </div>
 
                   </div>
-                  <button id="btn-dw-confirm" class="btn-dw-confirm">確認！ ✅</button>
+                  <button id="btn-dw-confirm" class="btn-dw-confirm">
+                    <span class="kanji">確認！</span>
+                    <span class="hiragana">かくにん！</span>
+                    ✅
+                  </button>
                   <div class="dw-oshii hidden" id="dw-oshii">
                     <span class="dw-oshii-icon">😅</span>
-                    <p class="dw-oshii-text">惜しい！もう一度！</p>
+                    <p class="dw-oshii-text">
+                      <span class="kanji">惜しい！もう一度！</span>
+                      <span class="hiragana">おしい！もういちど！</span>
+                    </p>
                   </div>
                 </div>
 
                 <!-- フェーズ②：天気クイズ -->
                 <div class="dw-phase hidden" id="dw-phase-weather">
-                  <p class="dw-guide">今日の天気は？</p>
+                  <p class="dw-guide">
+                    <span class="kanji">今日の天気は？</span>
+                    <span class="hiragana">きょうのてんきは？</span>
+                  </p>
                   <div class="weather-quiz-grid" id="weather-quiz-grid">
                     <button class="weather-quiz-btn" data-weather="晴れ">☀️<span>晴れ</span></button>
                     <button class="weather-quiz-btn" data-weather="くもり">⛅<span>くもり</span></button>
@@ -230,7 +331,11 @@
                     <div class="quiz-result-text" id="quiz-result-text"></div>
                   </div>
                   <div class="dw-weather-buttons hidden" id="dw-weather-buttons">
-                    <button id="btn-dw-next" class="btn-dw-confirm">次へ ▶</button>
+                    <button id="btn-dw-next" class="btn-dw-confirm">
+                      <span class="kanji">次へ</span>
+                      <span class="hiragana">つぎへ</span>
+                      ▶
+                    </button>
                   </div>
                 </div>
 
@@ -252,19 +357,33 @@
           <div class="mini-app" data-index="3">
             <div class="mini-app-header">
               <span class="mini-app-icon">📋</span>
-              <h2>出席</h2>
+              <h2>
+                <span class="kanji">出席</span>
+                <span class="hiragana">しゅっせき</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「出席をとります。」</p>
+              <p class="script-text">
+                「<span class="kanji">出席をとります。</span><span class="hiragana">しゅっせきをとります。</span>」
+              </p>
 
               <div class="attendance-area">
 
                 <!-- フェーズ①：スタート -->
                 <div class="att-phase" id="att-phase-ready">
-                  <p class="att-guide">ボタンをおして出席をはじめよう！</p>
-                  <div class="att-member-count" id="att-member-count">登録：0人</div>
-                  <button id="btn-att-start" class="btn-att-start">📋 出席をはじめる</button>
-                  <p class="att-no-member hidden" id="att-no-member">⚠️ 管理画面で名前を登録してください</p>
+                  <p class="att-guide">
+                    <span class="kanji">ボタンをおして出席をはじめよう！</span>
+                    <span class="hiragana">ボタンをおしてしゅっせきをはじめよう！</span>
+                  </p>
+                  <div class="att-member-count" id="att-member-count">
+                    <span class="kanji">登録</span>
+                    <span class="hiragana">とうろく</span>
+                    ：0人
+                  </div>
+                  <button id="btn-att-start" class="btn-att-start">
+                    📋 <span class="kanji">出席をはじめる</span><span class="hiragana">しゅっせきをはじめる</span>
+                  </button>
+                  <p class="att-no-member hidden" id="att-no-member">⚠️ <span class="kanji">管理画面で名前を登録してください</span><span class="hiragana">かんりがめんでなまえをとうろくしてください</span></p>
                 </div>
 
                 <!-- フェーズ②：呼名 -->
@@ -274,8 +393,12 @@
                     <div class="att-name" id="att-name">田中はなこ</div>
                   </div>
                   <div class="att-call-buttons">
-                    <button id="btn-att-present" class="btn-att-present">🙋 出席</button>
-                    <button id="btn-att-absent"  class="btn-att-absent">😔 欠席</button>
+                    <button id="btn-att-present" class="btn-att-present">
+                      🙋 <span class="kanji">出席</span><span class="hiragana">しゅっせき</span>
+                    </button>
+                    <button id="btn-att-absent"  class="btn-att-absent">
+                      😔 <span class="kanji">欠席</span><span class="hiragana">けっせき</span>
+                    </button>
                   </div>
                 </div>
 
@@ -287,7 +410,10 @@
                     <div class="att-result-detail" id="att-result-detail"></div>
                   </div>
                   <div class="att-absent-list hidden" id="att-absent-list">
-                    <p class="att-absent-title">欠席：</p>
+                    <p class="att-absent-title">
+                      <span class="kanji">欠席：</span>
+                      <span class="hiragana">けっせき：</span>
+                    </p>
                     <p class="att-absent-names" id="att-absent-names"></p>
                   </div>
                   <button id="btn-att-retry" class="btn-secondary">もう一度</button>
@@ -301,24 +427,39 @@
           <div class="mini-app" data-index="4">
             <div class="mini-app-header">
               <span class="mini-app-icon">🍱</span>
-              <h2>給食</h2>
+              <h2>
+                <span class="kanji">給食</span>
+                <span class="hiragana">きゅうしょく</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「給食です。今日の献立は…」</p>
+              <p class="script-text">
+                「<span class="kanji">給食です。今日の献立は…</span><span class="hiragana">きゅうしょくです。きょうのこんだては…</span>」
+              </p>
 
               <div class="kyushoku-area">
 
                 <!-- フェーズ①：スタート -->
                 <div class="kyu-phase" id="kyu-phase-ready">
-                  <p class="kyu-guide">今日の献立クイズをやってみよう！</p>
+                  <p class="kyu-guide">
+                    <span class="kanji">今日の献立クイズをやってみよう！</span>
+                    <span class="hiragana">きょうのこんだてクイズをやってみよう！</span>
+                  </p>
                   <div class="kyu-today-label" id="kyu-today-label">📅 読み込み中...</div>
-                  <button id="btn-kyu-start" class="btn-kyu-start">🍱 クイズをはじめる！</button>
-                  <p class="kyu-no-menu hidden" id="kyu-no-menu">⚠️ 管理画面で献立を登録してください</p>
+                  <button id="btn-kyu-start" class="btn-kyu-start">
+                    🍱 <span class="kanji">クイズをはじめる！</span><span class="hiragana">クイズをはじめる！</span>
+                  </button>
+                  <p class="kyu-no-menu hidden" id="kyu-no-menu">
+                    ⚠️ <span class="kanji">管理画面で献立を登録してください</span><span class="hiragana">かんりがめんでこんだてをとうろくしてください</span>
+                  </p>
                 </div>
 
                 <!-- フェーズ②：4択クイズ -->
                 <div class="kyu-phase hidden" id="kyu-phase-quiz">
-                  <p class="kyu-guide">今日の献立に入っているのはどれ？</p>
+                  <p class="kyu-guide">
+                    <span class="kanji">今日の献立に入っているのはどれ？</span>
+                    <span class="hiragana">きょうのこんだてにはいっているのはどれ？</span>
+                  </p>
                   <div class="kyu-quiz-grid" id="kyu-quiz-grid">
                     <!-- JS で 4択ボタンを動的生成 -->
                   </div>
@@ -327,13 +468,20 @@
                     <div class="kyu-result-text" id="kyu-result-text"></div>
                   </div>
                   <div class="kyu-next-buttons hidden" id="kyu-next-buttons">
-                    <button id="btn-kyu-next" class="btn-kyu-confirm">献立を見る ▶</button>
+                    <button id="btn-kyu-next" class="btn-kyu-confirm">
+                      <span class="kanji">献立を見る</span>
+                      <span class="hiragana">こんだてをみる</span>
+                      ▶
+                    </button>
                   </div>
                 </div>
 
                 <!-- フェーズ③：献立一覧 -->
                 <div class="kyu-phase hidden" id="kyu-phase-menu">
-                  <p class="kyu-guide kyu-guide-menu">今日の給食！</p>
+                  <p class="kyu-guide kyu-guide-menu">
+                    <span class="kanji">今日の給食！</span>
+                    <span class="hiragana">きょうのきゅうしょく！</span>
+                  </p>
                   <div class="kyu-menu-box" id="kyu-menu-box">
                     <!-- JS で献立リストを動的生成 -->
                   </div>
@@ -348,24 +496,39 @@
           <div class="mini-app" data-index="5">
             <div class="mini-app-header">
               <span class="mini-app-icon">🎵</span>
-              <h2>歌</h2>
+              <h2>
+                <span class="kanji">歌</span>
+                <span class="hiragana">うた</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「歌です。立ちましょう。」</p>
+              <p class="script-text">
+                「<span class="kanji">歌です。立ちましょう。</span><span class="hiragana">うたです。たちましょう。</span>」
+              </p>
 
               <div class="song-area">
 
                 <!-- フェーズ①：スタート -->
                 <div class="song-phase" id="song-phase-ready">
-                  <p class="song-guide">今月の歌を歌おう！<br>くじ引きをして、どの歌を歌うか決めよう！</p>
-                  <div class="song-this-month" id="song-this-month-label">📀 今月の歌：読み込み中...</div>
-                  <button id="btn-song-lottery" class="btn-song-lottery">🎫 くじを引く！</button>
-                  <p class="song-no-data hidden" id="song-no-data">⚠️ 管理画面で歌を登録してください</p>
+                  <p class="song-guide">
+                    <span class="kanji">今月の歌を歌おう！<br>くじ引きをして、どの歌を歌うか決めよう！</span>
+                    <span class="hiragana">こんげつのうたをうたおう！<br>くじびきをして、どのうたをうたうかきめよう！</span>
+                  </p>
+                  <div class="song-this-month" id="song-this-month-label">📀 <span class="kanji">今月の歌</span><span class="hiragana">こんげつのうた</span>：読み込み中...</div>
+                  <button id="btn-song-lottery" class="btn-song-lottery">
+                    🎫 <span class="kanji">くじを引く！</span><span class="hiragana">くじをひく！</span>
+                  </button>
+                  <p class="song-no-data hidden" id="song-no-data">
+                    ⚠️ <span class="kanji">管理画面で歌を登録してください</span><span class="hiragana">かんりがめんでうたをとうろくしてください</span>
+                  </p>
                 </div>
 
                 <!-- フェーズ②：くじ引きアニメーション -->
                 <div class="song-phase hidden" id="song-phase-lottery">
-                  <p class="song-guide">くじを引いています…</p>
+                  <p class="song-guide">
+                    <span class="kanji">くじを引いています…</span>
+                    <span class="hiragana">くじをひいています…</span>
+                  </p>
                   <div class="lottery-box" id="lottery-box">
                     <div class="lottery-icon" id="lottery-icon">🎫</div>
                     <div class="lottery-shake-text" id="lottery-shake-text">？？？</div>
@@ -374,12 +537,16 @@
                     <div class="lottery-result-badge" id="lottery-result-badge"></div>
                     <div class="lottery-result-text" id="lottery-result-text"></div>
                   </div>
-                  <button id="btn-song-lottery-next" class="btn-song-start hidden" id="btn-song-lottery-next">歌いにいく ▶</button>
+                  <button id="btn-song-lottery-next" class="btn-song-start hidden" id="btn-song-lottery-next">
+                    <span class="kanji">歌いにいく</span><span class="hiragana">うたいにいく</span> ▶
+                  </button>
                 </div>
 
                 <!-- フェーズ③：好きな曲を選ぶ（当たりのとき） -->
                 <div class="song-phase hidden" id="song-phase-select">
-                  <p class="song-guide">🎉 当たり！好きな歌をえらぼう！</p>
+                  <p class="song-guide">
+                    🎉 <span class="kanji">当たり！好きな歌をえらぼう！</span><span class="hiragana">あたり！すきなうたをえらぼう！</span>
+                  </p>
                   <div class="song-select-list" id="song-select-list">
                     <!-- JS で動的生成 -->
                   </div>
@@ -388,14 +555,19 @@
                 <!-- フェーズ④：歌を再生 -->
                 <div class="song-phase hidden" id="song-phase-play">
                   <div class="song-now-playing">
-                    <div class="song-now-label">♪ 今歌う歌</div>
+                    <div class="song-now-label">
+                      ♪ <span class="kanji">今歌う歌</span><span class="hiragana">いまうたううた</span>
+                    </div>
                     <div class="song-now-title" id="song-now-title">タイトル</div>
                   </div>
                   <div class="song-player-wrap">
                     <div id="song-youtube-player"></div>
                   </div>
                   <div class="song-lyrics-wrap" id="song-lyrics-wrap">
-                    <div class="song-lyrics-title">歌詞</div>
+                    <div class="song-lyrics-title">
+                      <span class="kanji">歌詞</span>
+                      <span class="hiragana">かし</span>
+                    </div>
                     <div class="song-lyrics-body" id="song-lyrics-body"></div>
                   </div>
                   <button id="btn-song-retry" class="btn-secondary">もう一度</button>
@@ -409,25 +581,37 @@
           <div class="mini-app" data-index="6">
             <div class="mini-app-header">
               <span class="mini-app-icon">🗣️</span>
-              <h2>日直の話</h2>
+              <h2>
+                <span class="kanji">日直の話</span>
+                <span class="hiragana">にっちょくのはなし</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「日直の話です。」</p>
+              <p class="script-text">
+                「<span class="kanji">日直の話です。</span><span class="hiragana">にっちょくのはなしです。</span>」
+              </p>
 
               <div class="nichoku-area">
 
                 <!-- フェーズ①：スタート -->
                 <div class="nichoku-phase" id="nichoku-phase-ready">
-                  <p class="nichoku-guide">ルーレットを回して、今日の話のトピックを決めよう！</p>
+                  <p class="nichoku-guide">
+                    <span class="kanji">ルーレットを回して、今日の話のトピックを決めよう！</span>
+                    <span class="hiragana">ルーレットをまわして、きょうのはなしのトピックをきめよう！</span>
+                  </p>
                   <div class="nichoku-topics-preview" id="nichoku-topics-preview">
                     <!-- JS で動的生成 -->
                   </div>
-                  <button id="btn-nichoku-spin" class="btn-nichoku-spin">🎰 ルーレットを回す！</button>
+                  <button id="btn-nichoku-spin" class="btn-nichoku-spin">
+                    🎰 <span class="kanji">ルーレットを回す！</span><span class="hiragana">ルーレットをまわす！</span>
+                  </button>
                 </div>
 
                 <!-- フェーズ②：ルーレット回転中 -->
                 <div class="nichoku-phase hidden" id="nichoku-phase-spinning">
-                  <p class="nichoku-guide">🎰 トピックを選んでいます…</p>
+                  <p class="nichoku-guide">
+                    🎰 <span class="kanji">トピックを選んでいます…</span><span class="hiragana">トピックをえらんでいます…</span>
+                  </p>
                   <div class="roulette-drum-wrap">
                     <div class="roulette-drum-window">
                       <div class="roulette-drum" id="roulette-drum">
@@ -440,11 +624,16 @@
 
                 <!-- フェーズ③：結果 -->
                 <div class="nichoku-phase hidden" id="nichoku-phase-result">
-                  <p class="nichoku-guide">📣 今日のトピックはこれ！</p>
+                  <p class="nichoku-guide">
+                    📣 <span class="kanji">今日のトピックはこれ！</span><span class="hiragana">きょうのトピックはこれ！</span>
+                  </p>
                   <div class="nichoku-result-box">
                     <div class="nichoku-result-topic" id="nichoku-result-topic">トピック</div>
                   </div>
-                  <p class="nichoku-result-msg">日直さん、お話しましょう！</p>
+                  <p class="nichoku-result-msg">
+                    <span class="kanji">日直さん、お話しましょう！</span>
+                    <span class="hiragana">にっちょくさん、おはなししましょう！</span>
+                  </p>
                   <button id="btn-nichoku-retry" class="btn-secondary">もう一度回す</button>
                 </div>
 
@@ -456,33 +645,54 @@
           <div class="mini-app" data-index="7">
             <div class="mini-app-header">
               <span class="mini-app-icon">👩‍🏫</span>
-              <h2>先生の話</h2>
+              <h2>
+                <span class="kanji">先生の話</span>
+                <span class="hiragana">せんせいのはなし</span>
+              </h2>
             </div>
             <div class="mini-app-body">
-              <p class="script-text">「先生の話です。先生お願いします。」</p>
+              <p class="script-text">
+                「<span class="kanji">先生の話です。先生お願いします。</span><span class="hiragana">せんせいのはなしです。せんせいおねがいします。</span>」
+              </p>
 
               <div class="sensei-area">
 
                 <!-- フェーズ①：スタート -->
                 <div class="sensei-phase" id="sensei-phase-ready">
-                  <p class="sensei-guide">先生がお話をします。<br>ボタンをおして始めましょう！</p>
-                  <button id="btn-sensei-start" class="btn-sensei-start">👩‍🏫 話をはじめる</button>
+                  <p class="sensei-guide">
+                    <span class="kanji">先生がお話をします。<br>ボタンをおして始めましょう！</span>
+                    <span class="hiragana">せんせいがおはなしをします。<br>ボタンをおしてはじめましょう！</span>
+                  </p>
+                  <button id="btn-sensei-start" class="btn-sensei-start">
+                    👩‍🏫 <span class="kanji">話をはじめる</span><span class="hiragana">はなしをはじめる</span>
+                  </button>
                 </div>
 
                 <!-- フェーズ②：話し中 -->
                 <div class="sensei-phase hidden" id="sensei-phase-talking">
                   <div class="sensei-talking-icon">👩‍🏫</div>
-                  <p class="sensei-talking-text">先生がお話ちゅうです。<br>しっかり聞きましょう！</p>
-                  <button id="btn-sensei-done" class="btn-sensei-done">✅ 話し終わりました</button>
+                  <p class="sensei-talking-text">
+                    <span class="kanji">先生がお話ちゅうです。<br>しっかり聞きましょう！</span>
+                    <span class="hiragana">せんせいがおはなしちゅうです。<br>しっかりききましょう！</span>
+                  </p>
+                  <button id="btn-sensei-done" class="btn-sensei-done">
+                    ✅ <span class="kanji">話し終わりました</span><span class="hiragana">はなしおわりました</span>
+                  </button>
                 </div>
 
                 <!-- フェーズ③：めあて入力 -->
                 <div class="sensei-phase hidden" id="sensei-phase-input">
                   <div class="sensei-input-preview" id="sensei-input-preview">
-                    <span class="sensei-preview-placeholder" id="sensei-preview-placeholder">ここに今日のめあてが表示されます</span>
+                    <span class="sensei-preview-placeholder" id="sensei-preview-placeholder">
+                      <span class="kanji">ここに今日のめあてが表示されます</span>
+                      <span class="hiragana">ここにきょうのめあてがひょうじされます</span>
+                    </span>
                     <span class="sensei-preview-text hidden" id="sensei-preview-text"></span>
                   </div>
-                  <p class="sensei-guide">今日のめあてを入力しましょう！</p>
+                  <p class="sensei-guide">
+                    <span class="kanji">今日のめあてを入力しましょう！</span>
+                    <span class="hiragana">きょうのめあてをにゅうりょくしましょう！</span>
+                  </p>
                   <div class="sensei-input-area">
                     <input
                       type="text"
@@ -491,14 +701,24 @@
                       placeholder="例：話をよく聞く"
                       maxlength="40"
                     />
-                    <button id="btn-sensei-confirm" class="btn-sensei-confirm">決定 ✅</button>
+                    <button id="btn-sensei-confirm" class="btn-sensei-confirm">
+                      <span class="kanji">決定</span>
+                      <span class="hiragana">けってい</span>
+                      ✅
+                    </button>
                   </div>
-                  <p class="sensei-input-error hidden" id="sensei-input-error">めあてを入力してください</p>
+                  <p class="sensei-input-error hidden" id="sensei-input-error">
+                    <span class="kanji">めあてを入力してください</span>
+                    <span class="hiragana">めあてをにゅうりょくしてください</span>
+                  </p>
                 </div>
 
                 <!-- フェーズ④：めあて表示 -->
                 <div class="sensei-phase hidden" id="sensei-phase-result">
-                  <p class="sensei-guide">今日のめあて</p>
+                  <p class="sensei-guide">
+                    <span class="kanji">今日のめあて</span>
+                    <span class="hiragana">きょうのめあて</span>
+                  </p>
                   <div class="sensei-result-box">
                     <div class="sensei-result-meate" id="sensei-result-meate"></div>
                   </div>
@@ -513,9 +733,13 @@
 
         <!-- ナビゲーションボタン -->
         <div class="nav-buttons">
-          <button id="btn-prev" class="btn-nav btn-prev" disabled>◀ もどる</button>
+          <button id="btn-prev" class="btn-nav btn-prev" disabled>
+            ◀ <span class="kanji">もどる</span><span class="hiragana">もどる</span>
+          </button>
           <div class="progress-dots" id="progress-dots"></div>
-          <button id="btn-next" class="btn-nav btn-next">つぎへ ▶</button>
+          <button id="btn-next" class="btn-nav btn-next">
+            <span class="kanji">つぎへ</span><span class="hiragana">つぎへ</span> ▶
+          </button>
         </div>
       </main>
     </div>
@@ -525,13 +749,24 @@
   <div id="screen-end" class="screen">
     <div class="end-inner">
       <div class="end-icon">🌟</div>
-      <h1 class="end-title">朝の会おわり！</h1>
-      <p class="end-subtitle">今日も一日がんばろう！</p>
+      <h1 class="end-title">
+        <span class="kanji">朝の会おわり！</span>
+        <span class="hiragana">あさのかいおわり！</span>
+      </h1>
+      <p class="end-subtitle">
+        <span class="kanji">今日も一日がんばろう！</span>
+        <span class="hiragana">きょうもいちにちがんばろう！</span>
+      </p>
       <div class="countdown-bar">
         <div class="countdown-fill" id="countdown-fill"></div>
       </div>
-      <p class="countdown-text" id="countdown-text">10秒後にトップにもどります</p>
-      <button id="btn-back-start" class="btn-main">トップにもどる</button>
+      <p class="countdown-text" id="countdown-text">
+        10<span class="kanji">秒後にトップにもどります</span><span class="hiragana">びょうごにトップにもどります</span>
+      </p>
+      <button id="btn-back-start" class="btn-main">
+        <span class="kanji">トップにもどる</span>
+        <span class="hiragana">トップにもどる</span>
+      </button>
     </div>
   </div>
 

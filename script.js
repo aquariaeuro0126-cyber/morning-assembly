@@ -169,17 +169,25 @@ btnPrev.addEventListener('click', () => {
 // ----------------------------------------
 // 終了画面カウントダウン
 // ----------------------------------------
+function getCountdownLabel(remaining) {
+  const isHiragana = document.body.dataset.mode === 'hiragana';
+  if (isHiragana) {
+    return `${remaining}びょうごにトップにもどります`;
+  }
+  return `${remaining}秒後にトップにもどります`;
+}
+
 function startEndCountdown() {
   clearTimeout(countdownTimer);
   let remaining = END_COUNTDOWN_SEC;
   countdownFill.style.width = '100%';
-  countdownText.textContent = `${remaining}秒後にトップにもどります`;
+  countdownText.textContent = getCountdownLabel(remaining);
 
   countdownTimer = setInterval(() => {
     remaining--;
     const pct = (remaining / END_COUNTDOWN_SEC) * 100;
     countdownFill.style.width = pct + '%';
-    countdownText.textContent = `${remaining}秒後にトップにもどります`;
+    countdownText.textContent = getCountdownLabel(remaining);
 
     if (remaining <= 0) {
       clearInterval(countdownTimer);
@@ -2079,3 +2087,32 @@ initAdminSong();
 initNichokuTalk();
 initAdminNichokuTalk();
 initSenseiTalk();
+
+// ----------------------------------------
+// ひらがな / 漢字モード切り替え
+// ----------------------------------------
+(function initDisplayMode() {
+  const body = document.body;
+  const btnKanji    = document.getElementById('btn-mode-kanji');
+  const btnHiragana = document.getElementById('btn-mode-hiragana');
+
+  // localStorage から保存済みモードを復元（デフォルト: kanji）
+  const savedMode = localStorage.getItem('displayMode') || 'kanji';
+  applyMode(savedMode);
+
+  btnKanji.addEventListener('click', () => applyMode('kanji'));
+  btnHiragana.addEventListener('click', () => applyMode('hiragana'));
+
+  function applyMode(mode) {
+    body.dataset.mode = mode;
+    localStorage.setItem('displayMode', mode);
+
+    if (mode === 'kanji') {
+      btnKanji.classList.add('active');
+      btnHiragana.classList.remove('active');
+    } else {
+      btnHiragana.classList.add('active');
+      btnKanji.classList.remove('active');
+    }
+  }
+})();
