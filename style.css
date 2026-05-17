@@ -2353,6 +2353,73 @@ html, body {
   background: #fafcff;
 }
 
+/* 月タブ */
+.admin-month-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.admin-month-tab {
+  padding: 6px 12px;
+  border: 2px solid var(--color-blue);
+  border-radius: 20px;
+  background: white;
+  color: var(--color-blue);
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-month-tab:hover {
+  background: #e8f0fe;
+}
+
+.admin-month-tab.active {
+  background: var(--color-blue);
+  color: white;
+}
+
+/* 音声ファイル入力エリア */
+.admin-song-m-audio-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.admin-song-file-input {
+  font-size: 14px;
+  color: var(--color-navy);
+}
+
+.admin-song-audio-status {
+  font-size: 13px;
+  color: var(--color-gray-dark, #666);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* 小さいボタン */
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* 音声プレーヤー */
+#song-audio-player {
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+#song-audio-player.hidden {
+  display: none;
+}
+
 /* ============================================================
    ⑦ 日直の話ミニアプリ
    ============================================================ */

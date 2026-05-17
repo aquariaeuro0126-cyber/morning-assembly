@@ -1335,6 +1335,57 @@ function initAdminKyushoku() {
 // ⑥ 歌ミニアプリ
 // ----------------------------------------
 
+// ----------------------------------------
+// 歌：IndexedDB ラッパー（音声ファイル保存用）
+// ----------------------------------------
+const SONG_AUDIO_DB_NAME    = 'MorningAssemblyDB';
+const SONG_AUDIO_DB_VERSION = 1;
+const SONG_AUDIO_STORE      = 'songAudio';
+
+function openSongAudioDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(SONG_AUDIO_DB_NAME, SONG_AUDIO_DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(SONG_AUDIO_STORE)) {
+        db.createObjectStore(SONG_AUDIO_STORE);
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function saveSongAudio(monthKey, base64) {
+  const db = await openSongAudioDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(SONG_AUDIO_STORE, 'readwrite');
+    const req = tx.objectStore(SONG_AUDIO_STORE).put(base64, String(monthKey));
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function loadSongAudio(monthKey) {
+  const db = await openSongAudioDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(SONG_AUDIO_STORE, 'readonly');
+    const req = tx.objectStore(SONG_AUDIO_STORE).get(String(monthKey));
+    req.onsuccess = e => resolve(e.target.result || null);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function deleteSongAudio(monthKey) {
+  const db = await openSongAudioDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(SONG_AUDIO_STORE, 'readwrite');
+    const req = tx.objectStore(SONG_AUDIO_STORE).delete(String(monthKey));
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
 // YouTube IFrame API が読み込まれたときに呼ばれるコールバック
 // （API側から自動で呼び出されるためグローバルに定義する必要がある）
 let ytPlayer = null;
@@ -1360,10 +1411,26 @@ function extractYouTubeId(url) {
 }
 
 function initSong() {
-  const STORAGE_KEY_MONTHLY = 'songMonthly';
-  const STORAGE_KEY_FAV     = 'songFavList';
-  const STORAGE_KEY_WIN     = 'songWinCount';
-  const LOTTERY_TOTAL       = 10; // くじの総枚数
+  const STORAGE_KEY_MONTHLY_ALL = 'songMonthlyAll';
+  const STORAGE_KEY_MONTHLY_OLD = 'songMonthly';     // 旧キー（マイグレーション用）
+  const STORAGE_KEY_FAV         = 'songFavList';
+  const STORAGE_KEY_WIN         = 'songWinCount';
+  const LOTTERY_TOTAL           = 10;
+
+  // 旧データ（songMonthly）→ songMonthlyAll へのマイグレーション
+  (function migrateOldData() {
+    const oldRaw = localStorage.getItem(STORAGE_KEY_MONTHLY_OLD);
+    const newRaw = localStorage.getItem(STORAGE_KEY_MONTHLY_ALL);
+    if (oldRaw && !newRaw) {
+      try {
+        const old = JSON.parse(oldRaw);
+        const monthKey = String(new Date().getMonth() + 1);
+        const migrated = {};
+        migrated[monthKey] = { title: old.title || '', url: old.url || '', lyrics: old.lyrics || '', hasAudio: false };
+        localStorage.setItem(STORAGE_KEY_MONTHLY_ALL, JSON.stringify(migrated));
+      } catch (_) { /* 無視 */ }
+    }
+  })();
 
   // --- DOM 取得 ---
   const phaseReady   = document.getElementById('song-phase-ready');
@@ -1375,26 +1442,30 @@ function initSong() {
   const btnLottery      = document.getElementById('btn-song-lottery');
   const noDataMsg       = document.getElementById('song-no-data');
 
-  const lotteryBox      = document.getElementById('lottery-box');
-  const lotteryIcon     = document.getElementById('lottery-icon');
-  const lotteryShakeText = document.getElementById('lottery-shake-text');
-  const lotteryResult   = document.getElementById('lottery-result');
+  const lotteryBox         = document.getElementById('lottery-box');
+  const lotteryIcon        = document.getElementById('lottery-icon');
+  const lotteryShakeText   = document.getElementById('lottery-shake-text');
+  const lotteryResult      = document.getElementById('lottery-result');
   const lotteryResultBadge = document.getElementById('lottery-result-badge');
   const lotteryResultText  = document.getElementById('lottery-result-text');
-  const btnLotteryNext  = document.getElementById('btn-song-lottery-next');
+  const btnLotteryNext     = document.getElementById('btn-song-lottery-next');
 
-  const songSelectList  = document.getElementById('song-select-list');
-  const songNowTitle    = document.getElementById('song-now-title');
-  const songLyricsWrap  = document.getElementById('song-lyrics-wrap');
-  const songLyricsBody  = document.getElementById('song-lyrics-body');
-  const btnSongRetry    = document.getElementById('btn-song-retry');
+  const songSelectList = document.getElementById('song-select-list');
+  const songNowTitle   = document.getElementById('song-now-title');
+  const songLyricsWrap = document.getElementById('song-lyrics-wrap');
+  const songLyricsBody = document.getElementById('song-lyrics-body');
+  const btnSongRetry   = document.getElementById('btn-song-retry');
 
   if (!phaseReady) return;
 
   // --- データ読み込み ---
+  function loadMonthlyAll() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY_ALL)) || {}; }
+    catch { return {}; }
+  }
   function loadMonthly() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY)) || null; }
-    catch { return null; }
+    const monthKey = String(new Date().getMonth() + 1);
+    return loadMonthlyAll()[monthKey] || null;
   }
   function loadFavList() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY_FAV)) || []; }
@@ -1416,39 +1487,40 @@ function initSong() {
   // --- スタート画面を更新 ---
   function refreshReady() {
     const monthly = loadMonthly();
-    if (!monthly || !monthly.title || !monthly.url) {
+    const monthKey = String(new Date().getMonth() + 1);
+    const hasContent = monthly && (monthly.title || monthly.hasAudio);
+    if (!hasContent) {
       thisMonthLabel.textContent = '📀 今月の歌：未登録';
       btnLottery.disabled = true;
       noDataMsg.classList.remove('hidden');
     } else {
-      thisMonthLabel.textContent = `📀 今月の歌：${monthly.title}`;
+      thisMonthLabel.textContent = `📀 今月の歌：${monthly.title || '（タイトル未設定）'}`;
       btnLottery.disabled = false;
       noDataMsg.classList.add('hidden');
     }
+    // 今月の月番号をボタンに保存（playSong で使用）
+    btnLottery.dataset.monthKey = monthKey;
   }
 
   // --- くじ引き実行 ---
   btnLottery.addEventListener('click', () => {
     showSongPhase(phaseLottery);
 
-    // アニメーション中はボックスをシェイク
     lotteryBox.style.animation = 'lotteryShake 0.4s ease infinite';
     lotteryIcon.textContent = '🎫';
     lotteryShakeText.textContent = '？？？';
     lotteryResult.classList.add('hidden');
     btnLotteryNext.classList.add('hidden');
 
-    // 1.5秒後に結果を表示
     setTimeout(() => {
       const winCount = loadWinCount();
       const isWin    = Math.random() < (winCount / LOTTERY_TOTAL);
 
-      // アニメーション停止
       lotteryBox.style.animation = 'none';
 
       if (isWin) {
-        lotteryIcon.textContent    = '🎊';
-        lotteryShakeText.textContent = '当たり！！';
+        lotteryIcon.textContent        = '🎊';
+        lotteryShakeText.textContent   = '当たり！！';
         lotteryResultBadge.textContent = '🎉';
         lotteryResultText.textContent  = '好きな歌を選んでいいよ！';
 
@@ -1457,8 +1529,8 @@ function initSong() {
         btnLotteryNext.classList.remove('hidden');
         btnLotteryNext.dataset.result = 'win';
       } else {
-        lotteryIcon.textContent    = '😢';
-        lotteryShakeText.textContent = 'はずれ…';
+        lotteryIcon.textContent        = '😢';
+        lotteryShakeText.textContent   = 'はずれ…';
         lotteryResultBadge.textContent = '📀';
         lotteryResultText.textContent  = '今月の歌を歌おう！';
 
@@ -1472,20 +1544,18 @@ function initSong() {
 
   // --- くじ結果の「次へ」 ---
   btnLotteryNext.addEventListener('click', () => {
-    const result = btnLotteryNext.dataset.result;
+    const result   = btnLotteryNext.dataset.result;
+    const monthKey = btnLottery.dataset.monthKey || String(new Date().getMonth() + 1);
     if (result === 'win') {
-      // 当たり → 好きな曲一覧へ
       const favList = loadFavList();
       if (favList.length === 0) {
-        // 好きな曲が未登録の場合は今月の歌へ
-        playSong(loadMonthly());
+        playSong(loadMonthly(), monthKey);
         return;
       }
       buildSelectList(favList);
       showSongPhase(phaseSelect);
     } else {
-      // はずれ → 今月の歌を再生
-      playSong(loadMonthly());
+      playSong(loadMonthly(), monthKey);
     }
   });
 
@@ -1496,15 +1566,15 @@ function initSong() {
       const btn = document.createElement('button');
       btn.className = 'song-select-btn';
       btn.innerHTML = `🎵 <span>${song.title}</span>`;
-      btn.addEventListener('click', () => playSong(song));
+      btn.addEventListener('click', () => playSong(song, null));
       songSelectList.appendChild(btn);
     });
   }
 
-  // --- 歌を再生するフェーズへ ---
-  function playSong(song) {
+  // --- 歌を再生するフェーズへ（async: 音声ファイルをIndexedDBから非同期取得） ---
+  async function playSong(song, monthKey) {
     if (!song) return;
-    songNowTitle.textContent = song.title;
+    songNowTitle.textContent = song.title || '（タイトル未設定）';
 
     // 歌詞
     if (song.lyrics && song.lyrics.trim()) {
@@ -1514,16 +1584,22 @@ function initSong() {
       songLyricsWrap.classList.add('hidden');
     }
 
-    // YouTube 埋め込み
-    const videoId = extractYouTubeId(song.url);
-    const playerEl = document.getElementById('song-youtube-player');
-    if (videoId && playerEl) {
-      if (ytPlayer) {
-        ytPlayer.destroy();
-        ytPlayer = null;
-      }
+    const playerEl  = document.getElementById('song-youtube-player');
+    const audioEl   = document.getElementById('song-audio-player');
+    const videoId   = extractYouTubeId(song.url);
+
+    // 音声・動画要素を一旦リセット
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.src = '';
+      audioEl.classList.add('hidden');
+    }
+    if (playerEl) playerEl.innerHTML = '';
+
+    if (videoId) {
+      // YouTube を優先再生
+      if (ytPlayer) { ytPlayer.destroy(); ytPlayer = null; }
       if (ytPlayerReady) {
-        // YouTube API が読み込み済み
         ytPlayer = new YT.Player('song-youtube-player', {
           height: '315',
           width:  '100%',
@@ -1531,12 +1607,24 @@ function initSong() {
           playerVars: { rel: 0, modestbranding: 1 }
         });
       } else {
-        // フォールバック：iframe を直接埋め込む
         playerEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" width="100%" height="315" allowfullscreen></iframe>`;
       }
+    } else if (song.hasAudio && monthKey) {
+      // 音声ファイル（IndexedDB）を再生
+      try {
+        const base64 = await loadSongAudio(monthKey);
+        if (base64 && audioEl) {
+          audioEl.src = base64;
+          audioEl.classList.remove('hidden');
+          audioEl.play().catch(() => {});
+        } else {
+          if (playerEl) playerEl.innerHTML = '<p style="text-align:center;padding:40px;color:#b0bec5;">音声ファイルが見つかりません</p>';
+        }
+      } catch (_) {
+        if (playerEl) playerEl.innerHTML = '<p style="text-align:center;padding:40px;color:#b0bec5;">音声の読み込みに失敗しました</p>';
+      }
     } else {
-      const playerEl2 = document.getElementById('song-youtube-player');
-      if (playerEl2) playerEl2.innerHTML = '<p style="text-align:center;padding:40px;color:#b0bec5;">動画URLが設定されていません</p>';
+      if (playerEl) playerEl.innerHTML = '<p style="text-align:center;padding:40px;color:#b0bec5;">動画URLが設定されていません</p>';
     }
 
     showSongPhase(phasePlay);
@@ -1550,9 +1638,16 @@ function initSong() {
       ytPlayer.destroy();
       ytPlayer = null;
     }
-    // iframe フォールバックも破棄
     const playerEl = document.getElementById('song-youtube-player');
     if (playerEl) playerEl.innerHTML = '';
+
+    // 音声プレーヤーを停止
+    const audioEl = document.getElementById('song-audio-player');
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.src = '';
+      audioEl.classList.add('hidden');
+    }
 
     refreshReady();
     showSongPhase(phaseReady);
@@ -1569,16 +1664,20 @@ function initSong() {
 // 管理画面 — 歌設定管理
 // ----------------------------------------
 function initAdminSong() {
-  const STORAGE_KEY_MONTHLY = 'songMonthly';
-  const STORAGE_KEY_FAV     = 'songFavList';
-  const STORAGE_KEY_WIN     = 'songWinCount';
+  const STORAGE_KEY_MONTHLY_ALL = 'songMonthlyAll';
+  const STORAGE_KEY_FAV         = 'songFavList';
+  const STORAGE_KEY_WIN         = 'songWinCount';
 
-  // --- DOM 取得 ---
-  const monthlyTitle  = document.getElementById('admin-song-monthly-title');
-  const monthlyUrl    = document.getElementById('admin-song-monthly-url');
-  const monthlyLyrics = document.getElementById('admin-song-monthly-lyrics');
-  const btnMonthlySave = document.getElementById('btn-admin-song-monthly-save');
-  const monthlySaved  = document.getElementById('admin-song-monthly-saved');
+  // --- DOM 取得（月ごと管理セクション） ---
+  const monthTabsEl    = document.getElementById('admin-song-month-tabs');
+  const mTitleInput    = document.getElementById('admin-song-m-title');
+  const mUrlInput      = document.getElementById('admin-song-m-url');
+  const mLyricsInput   = document.getElementById('admin-song-m-lyrics');
+  const mAudioInput    = document.getElementById('admin-song-m-audio');
+  const mAudioStatus   = document.getElementById('admin-song-m-audio-status');
+  const btnAudioDelete = document.getElementById('btn-admin-song-m-audio-delete');
+  const btnMSave       = document.getElementById('btn-admin-song-m-save');
+  const mSaved         = document.getElementById('admin-song-m-saved');
 
   const winCountInput = document.getElementById('admin-song-win-count');
   const btnWinSave    = document.getElementById('btn-admin-song-win-save');
@@ -1593,14 +1692,17 @@ function initAdminSong() {
   const favList        = document.getElementById('admin-song-fav-list');
   const favEmptyEl     = document.getElementById('admin-song-fav-empty');
 
-  if (!btnMonthlySave) return;
+  if (!btnMSave) return;
 
-  // --- データ読み書き ---
-  function loadMonthly() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY)) || { title: '', url: '', lyrics: '' }; }
-    catch { return { title: '', url: '', lyrics: '' }; }
+  // --- 現在選択中の月 ---
+  let selectedMonth = String(new Date().getMonth() + 1);
+
+  // --- localStorage 読み書き ---
+  function loadMonthlyAll() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY_ALL)) || {}; }
+    catch { return {}; }
   }
-  function saveMonthly(data) { localStorage.setItem(STORAGE_KEY_MONTHLY, JSON.stringify(data)); }
+  function saveMonthlyAll(data) { localStorage.setItem(STORAGE_KEY_MONTHLY_ALL, JSON.stringify(data)); }
 
   function loadFavList() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY_FAV)) || []; }
@@ -1614,45 +1716,149 @@ function initAdminSong() {
   }
   function saveWinCount(v) { localStorage.setItem(STORAGE_KEY_WIN, String(v)); }
 
-  // --- 今月の歌フォームを初期化 ---
-  function loadMonthlyForm() {
-    const data = loadMonthly();
-    monthlyTitle.value  = data.title  || '';
-    monthlyUrl.value    = data.url    || '';
-    monthlyLyrics.value = data.lyrics || '';
+  // --- 月タブを生成 ---
+  function buildMonthTabs() {
+    if (!monthTabsEl) return;
+    monthTabsEl.innerHTML = '';
+    for (let m = 1; m <= 12; m++) {
+      const btn = document.createElement('button');
+      btn.className = 'admin-month-tab';
+      btn.textContent = `${m}月`;
+      btn.dataset.month = String(m);
+      if (String(m) === selectedMonth) btn.classList.add('active');
+      btn.addEventListener('click', () => {
+        selectedMonth = String(m);
+        document.querySelectorAll('.admin-month-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadMonthForm();
+      });
+      monthTabsEl.appendChild(btn);
+    }
   }
 
-  // 今月の歌を保存
-  btnMonthlySave.addEventListener('click', () => {
-    saveMonthly({
-      title:  monthlyTitle.value.trim(),
-      url:    monthlyUrl.value.trim(),
-      lyrics: monthlyLyrics.value
-    });
-    monthlySaved.classList.remove('hidden');
-    setTimeout(() => monthlySaved.classList.add('hidden'), 2000);
+  // --- 選択中の月のフォームを読み込む ---
+  async function loadMonthForm() {
+    const all  = loadMonthlyAll();
+    const data = all[selectedMonth] || { title: '', url: '', lyrics: '', hasAudio: false };
+    mTitleInput.value  = data.title  || '';
+    mUrlInput.value    = data.url    || '';
+    mLyricsInput.value = data.lyrics || '';
+    if (mAudioInput) mAudioInput.value = '';
+
+    // 音声ファイルのステータスを確認
+    await updateAudioStatus(data.hasAudio);
+  }
+
+  async function updateAudioStatus(hasAudio) {
+    if (!mAudioStatus) return;
+    if (hasAudio) {
+      // IndexedDB に実際にデータがあるか確認
+      try {
+        const data = await loadSongAudio(selectedMonth);
+        mAudioStatus.textContent = data ? '✅ 登録済み' : '未登録';
+        mAudioStatus.style.color = data ? '#388e3c' : '#999';
+        if (btnAudioDelete) btnAudioDelete.classList.toggle('hidden', !data);
+      } catch (_) {
+        mAudioStatus.textContent = '未登録';
+        mAudioStatus.style.color = '#999';
+        if (btnAudioDelete) btnAudioDelete.classList.add('hidden');
+      }
+    } else {
+      mAudioStatus.textContent = '未登録';
+      mAudioStatus.style.color = '#999';
+      if (btnAudioDelete) btnAudioDelete.classList.add('hidden');
+    }
+  }
+
+  // --- 保存ボタン ---
+  btnMSave.addEventListener('click', async () => {
+    const all  = loadMonthlyAll();
+    const prev = all[selectedMonth] || { hasAudio: false };
+
+    // MP3ファイルが選択されている場合は先に保存
+    let hasAudio = prev.hasAudio;
+    if (mAudioInput && mAudioInput.files && mAudioInput.files.length > 0) {
+      const file = mAudioInput.files[0];
+      if (file.size > 30 * 1024 * 1024) {
+        alert('ファイルが大きすぎます（30MB以下を推奨）');
+        return;
+      }
+      try {
+        const base64 = await readFileAsBase64(file);
+        await saveSongAudio(selectedMonth, base64);
+        hasAudio = true;
+      } catch (_) {
+        alert('音声ファイルの保存に失敗しました');
+        return;
+      }
+    }
+
+    all[selectedMonth] = {
+      title:    mTitleInput.value.trim(),
+      url:      mUrlInput.value.trim(),
+      lyrics:   mLyricsInput.value,
+      hasAudio: hasAudio,
+    };
+    saveMonthlyAll(all);
+
+    mSaved.classList.remove('hidden');
+    setTimeout(() => mSaved.classList.add('hidden'), 2000);
     document.dispatchEvent(new CustomEvent('song-updated'));
+
+    // 保存後にステータス更新
+    if (mAudioInput) mAudioInput.value = '';
+    await updateAudioStatus(hasAudio);
   });
+
+  // --- 音声ファイルを削除 ---
+  if (btnAudioDelete) {
+    btnAudioDelete.addEventListener('click', async () => {
+      try {
+        await deleteSongAudio(selectedMonth);
+        const all = loadMonthlyAll();
+        if (all[selectedMonth]) {
+          all[selectedMonth].hasAudio = false;
+          saveMonthlyAll(all);
+        }
+        await updateAudioStatus(false);
+        document.dispatchEvent(new CustomEvent('song-updated'));
+      } catch (_) {
+        alert('削除に失敗しました');
+      }
+    });
+  }
+
+  // --- ファイルを base64 に変換 ---
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = e => resolve(e.target.result);
+      reader.onerror = e => reject(e);
+      reader.readAsDataURL(file);
+    });
+  }
 
   // --- 当たり枠数 ---
   function loadWinForm() {
-    winCountInput.value = loadWinCount();
+    if (winCountInput) winCountInput.value = loadWinCount();
   }
 
-  btnWinSave.addEventListener('click', () => {
-    let v = parseInt(winCountInput.value);
-    if (isNaN(v) || v < 1) v = 1;
-    if (v > 9) v = 9;
-    winCountInput.value = v;
-    saveWinCount(v);
-    winSaved.classList.remove('hidden');
-    setTimeout(() => winSaved.classList.add('hidden'), 2000);
-  });
+  if (btnWinSave) {
+    btnWinSave.addEventListener('click', () => {
+      let v = parseInt(winCountInput.value);
+      if (isNaN(v) || v < 1) v = 1;
+      if (v > 9) v = 9;
+      winCountInput.value = v;
+      saveWinCount(v);
+      winSaved.classList.remove('hidden');
+      setTimeout(() => winSaved.classList.add('hidden'), 2000);
+    });
+  }
 
   // --- 好きな曲リスト ---
   function renderFavList() {
     const list = loadFavList();
-    favCountEl.textContent = `${list.length}曲登録中`;
+    if (favCountEl) favCountEl.textContent = `${list.length}曲登録中`;
 
     Array.from(favList.children).forEach(li => {
       if (li !== favEmptyEl) li.remove();
@@ -1663,10 +1869,10 @@ function initAdminSong() {
     } else {
       favEmptyEl.style.display = 'none';
       list.forEach((song, i) => {
-        const li = document.createElement('li');
+        const li   = document.createElement('li');
         const span = document.createElement('span');
         span.textContent = song.title;
-        span.style.flex = '1';
+        span.style.flex     = '1';
         span.style.fontSize = '15px';
 
         const delBtn = document.createElement('button');
@@ -1687,37 +1893,41 @@ function initAdminSong() {
     }
   }
 
-  btnFavAdd.addEventListener('click', () => {
-    const title  = favTitleInput.value.trim();
-    const url    = favUrlInput.value.trim();
-    const lyrics = favLyricsInput.value;
+  if (btnFavAdd) {
+    btnFavAdd.addEventListener('click', () => {
+      const title  = favTitleInput.value.trim();
+      const url    = favUrlInput.value.trim();
+      const lyrics = favLyricsInput.value;
 
-    if (!title || !url) {
-      favError.classList.remove('hidden');
-      return;
-    }
-    favError.classList.add('hidden');
+      if (!title || !url) {
+        favError.classList.remove('hidden');
+        return;
+      }
+      favError.classList.add('hidden');
 
-    const list = loadFavList();
-    list.push({ title, url, lyrics });
-    saveFavList(list);
+      const list = loadFavList();
+      list.push({ title, url, lyrics });
+      saveFavList(list);
 
-    favTitleInput.value  = '';
-    favUrlInput.value    = '';
-    favLyricsInput.value = '';
-    renderFavList();
-    document.dispatchEvent(new CustomEvent('song-updated'));
-  });
+      favTitleInput.value  = '';
+      favUrlInput.value    = '';
+      favLyricsInput.value = '';
+      renderFavList();
+      document.dispatchEvent(new CustomEvent('song-updated'));
+    });
+  }
 
-  // 管理画面を開くたびにフォームを最新化
+  // 管理画面を開くたびに最新化
   document.addEventListener('admin-opened', () => {
-    loadMonthlyForm();
+    buildMonthTabs();
+    loadMonthForm();
     loadWinForm();
     renderFavList();
   });
 
   // 初回
-  loadMonthlyForm();
+  buildMonthTabs();
+  loadMonthForm();
   loadWinForm();
   renderFavList();
 }

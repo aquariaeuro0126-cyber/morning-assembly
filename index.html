@@ -562,6 +562,7 @@
                   </div>
                   <div class="song-player-wrap">
                     <div id="song-youtube-player"></div>
+                    <audio id="song-audio-player" controls class="hidden" style="width:100%"></audio>
                   </div>
                   <div class="song-lyrics-wrap" id="song-lyrics-wrap">
                     <div class="song-lyrics-title">
@@ -889,25 +890,41 @@
         <!-- 歌：設定管理 -->
         <section class="admin-section">
           <h2 class="admin-section-title">🎵 歌 — 設定管理</h2>
-          <p class="admin-section-desc">今月の歌・好きな曲リスト・当たり枠数を登録します。</p>
+          <p class="admin-section-desc">月ごとの歌・好きな曲リスト・当たり枠数を登録します。</p>
 
-          <!-- 今月の歌 -->
+          <!-- 月ごとの歌 -->
           <div class="admin-song-block">
-            <h3 class="admin-song-block-title">📀 今月の歌</h3>
+            <h3 class="admin-song-block-title">📀 月ごとの歌</h3>
+            <p class="admin-section-desc">月を選んで、その月の歌を登録してください。アプリは今月の歌を自動的に使用します。</p>
+
+            <!-- 月タブ -->
+            <div class="admin-month-tabs" id="admin-song-month-tabs">
+              <!-- JS で 1〜12月のタブボタンを生成 -->
+            </div>
+
+            <!-- 選択月のフォーム -->
             <div class="admin-song-field-row">
               <label class="admin-song-label">タイトル</label>
-              <input type="text" id="admin-song-monthly-title" class="admin-song-input" placeholder="例：翼をください" maxlength="50" />
+              <input type="text" id="admin-song-m-title" class="admin-song-input" placeholder="例：翼をください" maxlength="50" />
             </div>
             <div class="admin-song-field-row">
               <label class="admin-song-label">YouTube URL</label>
-              <input type="text" id="admin-song-monthly-url" class="admin-song-input" placeholder="https://www.youtube.com/watch?v=..." maxlength="200" />
+              <input type="text" id="admin-song-m-url" class="admin-song-input" placeholder="https://www.youtube.com/watch?v=..." maxlength="200" />
+            </div>
+            <div class="admin-song-field-row">
+              <label class="admin-song-label">音声ファイル</label>
+              <div class="admin-song-m-audio-row">
+                <input type="file" id="admin-song-m-audio" accept="audio/*" class="admin-song-file-input" />
+                <span class="admin-song-audio-status" id="admin-song-m-audio-status">未登録</span>
+                <button id="btn-admin-song-m-audio-delete" class="btn-admin-danger btn-sm hidden">削除</button>
+              </div>
             </div>
             <div class="admin-song-field-row admin-song-field-col">
               <label class="admin-song-label">歌詞（省略可）</label>
-              <textarea id="admin-song-monthly-lyrics" class="admin-song-textarea" placeholder="歌詞を入力（改行OK）" rows="5"></textarea>
+              <textarea id="admin-song-m-lyrics" class="admin-song-textarea" placeholder="歌詞を入力（改行OK）" rows="5"></textarea>
             </div>
-            <button id="btn-admin-song-monthly-save" class="btn-admin-add">保存</button>
-            <p class="admin-song-saved hidden" id="admin-song-monthly-saved">✅ 保存しました</p>
+            <button id="btn-admin-song-m-save" class="btn-admin-add">保存</button>
+            <p class="admin-song-saved hidden" id="admin-song-m-saved">✅ 保存しました</p>
           </div>
 
           <!-- 当たり枠数 -->
