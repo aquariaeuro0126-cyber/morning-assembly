@@ -364,3 +364,56 @@ YouTube IFrame API を利用してブラウザ内で動画再生。
 - ⑧先生の話も同セッション系列で実装完了（コミット `7bd090c`）、全8ステップが出揃った
 - 今後の方針：実際に教室で使用してみてフィードバックをもとに改善していく
 - 次のタスク：実運用後の改善要望への対応（現時点では未定）
+
+### 2026-05-12（第4セッション：歌ミニアプリの月別管理・音声ファイル対応）
+
+#### 背景と出発点
+前セッションまでで全8ミニアプリの実装が完了し、実運用フェーズに入っていた。
+ユーザーから「歌を月ごとに登録・管理したい」「MP3などを直接アップロードして再生できるようにしたい」という改修要望があり、歌ミニアプリ（initSong / initAdminSong）を全面的に書き換えた。
+
+#### データ設計の変更
+- 変更前：`songMonthly = { title, url, lyrics }`（1曲のみ）
+- 変更後：`songMonthlyAll = { "1": {...}, ..., "12": {...} }`（月番号をキーとするオブジェクト）
+- 音声バイナリはlocalStorageの5MB制限を回避するため、IndexedDB（`MorningAssemblyDB` / ストア名 `songAudio`）に分離保存
+- 旧データ（`songMonthly`）は削除せず、初回起動時に今月のエントリとして `songMonthlyAll` へ自動マイグレーション
+
+#### IndexedDB ラッパー関数の追加（script.js）
+`extractYouTubeId` より前に4関数を追加：
+- `openSongAudioDB()`：DB接続・バージョン管理
+- `saveSongAudio(monthKey, base64)`：音声データ保存
+- `loadSongAudio(monthKey)`：音声データ読み込み
+- `deleteSongAudio(monthKey)`：音声データ削除
+
+#### initSong() の書き換え（script.js）
+- ストレージキーを `songMonthly` → `songMonthlyAll` に変更
+- `loadMonthly()` を「現在月のエントリを自動取得」する実装に変更
+- `playSong()` を async 化：YouTube優先 → 音声ファイルフォールバックの条件分岐
+- 「もう一度」ボタンに `<audio>` 停止処理を追加
+- `initSong()` 先頭に旧データマイグレーション処理を追加
+
+#### initAdminSong() の書き換え（script.js）
+- 月タブ（1〜12月）をJSで動的生成し、タブ切り替えでフォームデータを更新
+- 保存時は選択中の月キーで `songMonthlyAll` を更新
+- MP3アップロード：FileReader で base64 変換 → IndexedDB に保存
+- 音声ファイル登録済みの場合「✅ 登録済み」、未登録の場合「未登録」と表示
+- 削除ボタンで IndexedDB から音声データを削除
+- ファイルサイズ30MB超の場合アラートで警告
+
+#### index.html の変更
+- 再生フェーズ（`song-phase-play`）内に `<audio id="song-audio-player">` を追加
+- 管理画面の歌セクションを月タブUI付きフォームに全面置き換え
+  - `id="admin-song-month-tabs"` — JSで1〜12月タブを動的生成
+  - `id="admin-song-m-audio"` — `accept="audio/*"` ファイル選択
+  - `id="admin-song-m-audio-status"` — 登録状態表示
+  - `id="btn-admin-song-m-audio-delete"` — 音声削除ボタン
+
+#### style.css の追加
+- `.admin-month-tabs` / `.admin-month-tab` / `.admin-month-tab.active`：月タブのスタイル
+- `.admin-song-m-audio-row` / `.admin-song-file-input` / `.admin-song-audio-status`：音声入力エリア
+- `.btn-sm`：小さいボタン汎用クラス
+- `#song-audio-player` / `#song-audio-player.hidden`：音声プレーヤー
+
+#### 決定事項・次のタスク
+- コミット `eb1aafe`（3ファイル、+416行/-122行）をGitHubにpush済み
+- 好きな曲リスト（`songFavList`）はYouTube URLのみ対応のまま（音声ファイル非対応）
+- 次のタスク：実際に使用してフィードバックをもとに改善（現時点では未定）
