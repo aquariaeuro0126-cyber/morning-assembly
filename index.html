@@ -130,6 +130,25 @@
 
                 <!-- フェーズ①：スタート -->
                 <div class="reiko-phase" id="reiko-phase-ready">
+                  <!-- 日直表示・選択エリア -->
+                  <div class="reiko-nicchoku-area">
+                    <p class="reiko-nicchoku-label">
+                      <span class="kanji">日直は</span><span class="hiragana">にっちょくは</span>
+                    </p>
+                    <div class="reiko-nicchoku-name" id="reiko-nicchoku-name">
+                      <span class="reiko-nicchoku-placeholder" id="reiko-nicchoku-placeholder">
+                        <span class="kanji">（名前を選んでください）</span>
+                        <span class="hiragana">（なまえをえらんでください）</span>
+                      </span>
+                      <span class="reiko-nicchoku-selected hidden" id="reiko-nicchoku-selected"></span>
+                    </div>
+                    <p class="reiko-nicchoku-suffix">
+                      <span class="kanji">です。</span><span class="hiragana">です。</span>
+                    </p>
+                    <div class="reiko-nicchoku-list" id="reiko-nicchoku-list">
+                      <!-- JS で名簿から生成 -->
+                    </div>
+                  </div>
                   <p class="reiko-guide">
                     <span class="kanji">ボタンをおして号令をかけよう！</span>
                     <span class="hiragana">ボタンをおしてごうれいをかけよう！</span>
@@ -676,6 +695,7 @@
                     <span class="kanji">先生がお話ちゅうです。<br>しっかり聞きましょう！</span>
                     <span class="hiragana">せんせいがおはなしちゅうです。<br>しっかりききましょう！</span>
                   </p>
+                  <div class="sensei-timer-display" id="sensei-timer-display">0:00</div>
                   <button id="btn-sensei-done" class="btn-sensei-done">
                     ✅ <span class="kanji">話し終わりました</span><span class="hiragana">はなしおわりました</span>
                   </button>
@@ -748,10 +768,19 @@
                       </div>
                       <div class="kb-row">
                         <button class="kb-key" data-char="や">や</button>
-                        <button class="kb-key kb-key-wide" data-char="　">　</button>
                         <button class="kb-key" data-char="ゆ">ゆ</button>
-                        <button class="kb-key kb-key-wide" data-char="　">　</button>
                         <button class="kb-key" data-char="よ">よ</button>
+                        <button class="kb-key kb-key-small" data-char="ゃ">ゃ</button>
+                        <button class="kb-key kb-key-small" data-char="ゅ">ゅ</button>
+                        <button class="kb-key kb-key-small" data-char="ょ">ょ</button>
+                      </div>
+                      <div class="kb-row">
+                        <button class="kb-key kb-key-small" data-char="ぁ">ぁ</button>
+                        <button class="kb-key kb-key-small" data-char="ぃ">ぃ</button>
+                        <button class="kb-key kb-key-small" data-char="ぅ">ぅ</button>
+                        <button class="kb-key kb-key-small" data-char="ぇ">ぇ</button>
+                        <button class="kb-key kb-key-small" data-char="ぉ">ぉ</button>
+                        <button class="kb-key kb-key-small" data-char="っ">っ</button>
                       </div>
                       <div class="kb-row">
                         <button class="kb-key" data-char="ら">ら</button>
@@ -765,7 +794,8 @@
                         <button class="kb-key" data-char="を">を</button>
                         <button class="kb-key" data-char="ん">ん</button>
                         <button class="kb-key" data-char="ー">ー</button>
-                        <button class="kb-key" data-char="っ">っ</button>
+                        <button class="kb-key" data-char="。">。</button>
+                        <button class="kb-key" data-char="、">、</button>
                       </div>
                       <div class="kb-row">
                         <button class="kb-key" data-char="゛">゛</button>
@@ -791,6 +821,7 @@
                   <div class="sensei-result-box">
                     <div class="sensei-result-meate" id="sensei-result-meate"></div>
                   </div>
+                  <p class="sensei-result-time" id="sensei-result-time"></p>
                   <button id="btn-sensei-retry" class="btn-secondary">もう一度</button>
                 </div>
 

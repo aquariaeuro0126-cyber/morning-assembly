@@ -529,8 +529,42 @@ function initReikoElements() {
   const btnReikoStart      = document.getElementById('btn-reiko-start');
   const btnReikoNaore      = document.getElementById('btn-reiko-naore');
   const btnReikoRetry      = document.getElementById('btn-reiko-retry');
+  const nicchokuList       = document.getElementById('reiko-nicchoku-list');
+  const nicchokuPlaceholder = document.getElementById('reiko-nicchoku-placeholder');
+  const nicchokuSelected   = document.getElementById('reiko-nicchoku-selected');
 
   if (!btnReikoStart) return;
+
+  // 日直ボタンリストを名簿から生成
+  function renderNicchokuList() {
+    const names = JSON.parse(localStorage.getItem('att_names') || '[]');
+    nicchokuList.innerHTML = '';
+    if (names.length === 0) {
+      const msg = document.createElement('p');
+      msg.className = 'reiko-nicchoku-empty';
+      msg.innerHTML = '<span class="kanji">名簿が登録されていません</span><span class="hiragana">なまえがとうろくされていません</span>';
+      nicchokuList.appendChild(msg);
+      return;
+    }
+    names.forEach(name => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-nicchoku';
+      btn.textContent = name;
+      btn.addEventListener('click', () => {
+        // 選択状態を更新
+        nicchokuList.querySelectorAll('.btn-nicchoku').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        nicchokuSelected.textContent = name + 'さん';
+        nicchokuSelected.classList.remove('hidden');
+        nicchokuPlaceholder.classList.add('hidden');
+      });
+      nicchokuList.appendChild(btn);
+    });
+  }
+
+  // ミニアプリが表示されるたびにリストを更新
+  document.addEventListener('roster-updated', renderNicchokuList);
+  renderNicchokuList();
 
   function showReikoPhase(phase) {
     [reikoPhaseReady, reikoPhaseKiotsuke, reikoPhaseRei, reikoPhaseDone].forEach(p => {
@@ -569,6 +603,10 @@ function initReikoElements() {
   btnReikoRetry.addEventListener('click', () => {
     clearInterval(reikoTimer);
     ringProgress.style.strokeDashoffset = '0';
+    // 日直選択リセット
+    nicchokuList.querySelectorAll('.btn-nicchoku').forEach(b => b.classList.remove('selected'));
+    nicchokuSelected.classList.add('hidden');
+    nicchokuPlaceholder.classList.remove('hidden');
     showReikoPhase(reikoPhaseReady);
   });
 }
@@ -2213,6 +2251,32 @@ function initSenseiTalk() {
   const previewText        = document.getElementById('sensei-preview-text');
   const inputError         = document.getElementById('sensei-input-error');
   const resultMeate        = document.getElementById('sensei-result-meate');
+  const timerDisplay       = document.getElementById('sensei-timer-display');
+  const resultTime         = document.getElementById('sensei-result-time');
+
+  // カウントアップタイマー
+  let senseiTimerInterval = null;
+  let senseiElapsedSec = 0;
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function startSenseiTimer() {
+    senseiElapsedSec = 0;
+    timerDisplay.textContent = formatTime(0);
+    clearInterval(senseiTimerInterval);
+    senseiTimerInterval = setInterval(() => {
+      senseiElapsedSec++;
+      timerDisplay.textContent = formatTime(senseiElapsedSec);
+    }, 1000);
+  }
+
+  function stopSenseiTimer() {
+    clearInterval(senseiTimerInterval);
+  }
 
   // カスタムキーボード
   const keyboard   = document.getElementById('sensei-keyboard');
@@ -2328,16 +2392,25 @@ function initSenseiTalk() {
   // フェーズ①→②：話をはじめる
   btnStart.addEventListener('click', () => {
     showSenseiPhase(phaseTalking);
+    startSenseiTimer();
   });
 
   // フェーズ②→③：話し終わりました
   btnDone.addEventListener('click', () => {
+    stopSenseiTimer();
+    // 経過時間を結果フェーズ用に保存
+    const elapsed = senseiElapsedSec;
+    if (resultTime) {
+      resultTime.textContent = '（お話の時間：' + formatTime(elapsed) + '）';
+    }
     resetInput();
     showSenseiPhase(phaseInput);
   });
 
   // フェーズ④→①：もう一度
   btnRetry.addEventListener('click', () => {
+    stopSenseiTimer();
+    if (resultTime) resultTime.textContent = '';
     showSenseiPhase(phaseReady);
   });
 }
