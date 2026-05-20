@@ -1537,6 +1537,77 @@ html, body {
   color: #e57373;
 }
 
+/* 先生呼び出しフェーズ */
+.att-teacher-label {
+  font-size: 18px;
+  color: var(--color-navy);
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.att-teacher-name-card {
+  background: linear-gradient(135deg, #e8f4fd, #d0eaff);
+  border-radius: 20px;
+  padding: 24px 32px;
+  margin: 12px 0;
+  animation: attCardIn 0.3s ease;
+}
+
+.att-teacher-name {
+  font-size: 52px;
+  font-weight: bold;
+  color: var(--color-navy);
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.att-senno-wrap {
+  margin: 20px 0 24px;
+}
+
+.att-senno {
+  font-size: 72px;
+  font-weight: bold;
+  color: #e65100;
+  text-align: center;
+  letter-spacing: 4px;
+  text-shadow: 2px 4px 8px rgba(230, 81, 0, 0.25);
+  animation: attCardIn 0.4s ease;
+}
+
+.btn-att-teacher-next {
+  background: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 36px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-att-teacher-next:active {
+  transform: scale(0.96);
+  background: #1a237e;
+}
+
+/* 管理画面 先生ブロック */
+.admin-teacher-block {
+  background: #f5f9ff;
+  border: 1px solid #c5d8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.admin-teacher-block-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--color-navy);
+  margin-bottom: 12px;
+}
+
 /* ========================================
    管理画面 — セクション共通
 ======================================== */

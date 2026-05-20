@@ -835,6 +835,7 @@ function initAttendance() {
   // --- DOM 取得 ---
   const phaseReady   = document.getElementById('att-phase-ready');
   const phaseCalling = document.getElementById('att-phase-calling');
+  const phaseTeacher = document.getElementById('att-phase-teacher');
   const phaseResult  = document.getElementById('att-phase-result');
 
   const memberCountEl  = document.getElementById('att-member-count');
@@ -846,6 +847,9 @@ function initAttendance() {
   const btnPresent     = document.getElementById('btn-att-present');
   const btnAbsent      = document.getElementById('btn-att-absent');
 
+  const teacherNameEl      = document.getElementById('att-teacher-name');
+  const btnTeacherNext     = document.getElementById('btn-att-teacher-next');
+
   const resultIconEl   = document.getElementById('att-result-icon');
   const resultMainEl   = document.getElementById('att-result-main');
   const resultDetailEl = document.getElementById('att-result-detail');
@@ -854,15 +858,23 @@ function initAttendance() {
   const btnAttRetry    = document.getElementById('btn-att-retry');
 
   // --- 状態変数 ---
-  let shuffledNames = []; // シャッフル済み名前リスト
-  let callIndex     = 0;  // 現在呼名中のインデックス
-  let absentNames   = []; // 欠席者リスト
+  let shuffledNames  = []; // シャッフル済み生徒名リスト
+  let callIndex      = 0;  // 現在呼名中のインデックス
+  let absentNames    = []; // 欠席者リスト
+  let teacherNames   = []; // 先生名リスト（登録順）
+  let teacherIndex   = 0;  // 現在の先生インデックス
 
   // --- ユーティリティ ---
 
-  // localStorage から名前リストを取得
+  // localStorage から生徒名リストを取得
   function loadNames() {
     const raw = localStorage.getItem('att_names');
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  // localStorage から先生名リストを取得
+  function loadTeacherNames() {
+    const raw = localStorage.getItem('teacher_names');
     return raw ? JSON.parse(raw) : [];
   }
 
@@ -878,7 +890,7 @@ function initAttendance() {
 
   // フェーズ切り替え
   function showAttPhase(phase) {
-    [phaseReady, phaseCalling, phaseResult].forEach(p => p.classList.add('hidden'));
+    [phaseReady, phaseCalling, phaseTeacher, phaseResult].forEach(p => p.classList.add('hidden'));
     phase.classList.remove('hidden');
   }
 
@@ -908,7 +920,7 @@ function initAttendance() {
 
   // 現在の呼名カードを表示
   function showCallCard() {
-    nameEl.textContent       = shuffledNames[callIndex];
+    nameEl.textContent         = shuffledNames[callIndex];
     progressTextEl.textContent = `${callIndex + 1} / ${shuffledNames.length}`;
 
     // 名前カードにアニメーション再起動
@@ -928,27 +940,55 @@ function initAttendance() {
     if (callIndex < shuffledNames.length) {
       showCallCard();
     } else {
-      showResult();
+      // 生徒全員完了 → 先生フェーズへ（先生が0人なら結果へ）
+      teacherNames = loadTeacherNames();
+      if (teacherNames.length === 0) {
+        showResult();
+      } else {
+        teacherIndex = 0;
+        showTeacherCard();
+        showAttPhase(phaseTeacher);
+      }
     }
   }
 
   btnPresent.addEventListener('click', () => handleCall(true));
   btnAbsent.addEventListener('click',  () => handleCall(false));
 
-  // --- フェーズ③：集計結果表示 ---
+  // --- フェーズ③：先生呼び出し ---
+  function showTeacherCard() {
+    teacherNameEl.textContent = teacherNames[teacherIndex];
+
+    // 名前カードのアニメーション再起動
+    teacherNameEl.closest('.att-teacher-name-card').style.animation = 'none';
+    requestAnimationFrame(() => {
+      teacherNameEl.closest('.att-teacher-name-card').style.animation = '';
+    });
+  }
+
+  btnTeacherNext.addEventListener('click', () => {
+    teacherIndex++;
+    if (teacherIndex < teacherNames.length) {
+      showTeacherCard();
+    } else {
+      showResult();
+    }
+  });
+
+  // --- フェーズ④：集計結果表示 ---
   function showResult() {
     const total   = shuffledNames.length;
     const absent  = absentNames.length;
     const present = total - absent;
 
     if (absent === 0) {
-      resultIconEl.textContent  = '🌟';
-      resultMainEl.textContent  = '全員出席！';
+      resultIconEl.textContent   = '🌟';
+      resultMainEl.textContent   = '全員出席！';
       resultDetailEl.textContent = `${total}人 みんな来たよ！`;
       absentListEl.classList.add('hidden');
     } else {
-      resultIconEl.textContent  = '📋';
-      resultMainEl.textContent  = `出席 ${present}人 / 欠席 ${absent}人`;
+      resultIconEl.textContent   = '📋';
+      resultMainEl.textContent   = `出席 ${present}人 / 欠席 ${absent}人`;
       resultDetailEl.textContent = `全体 ${total}人`;
       absentNamesEl.textContent  = absentNames.join('、');
       absentListEl.classList.remove('hidden');
@@ -975,6 +1015,82 @@ function initAttendance() {
 // ----------------------------------------
 function initAdminRoster() {
 
+  // ---- 先生名管理 ----
+  const teacherInput   = document.getElementById('admin-teacher-input');
+  const btnAddTeacher  = document.getElementById('btn-admin-add-teacher');
+  const teacherError   = document.getElementById('admin-teacher-error');
+  const teacherList    = document.getElementById('admin-teacher-list');
+  const teacherCountEl = document.getElementById('admin-teacher-count');
+  const teacherEmptyEl = document.getElementById('admin-teacher-empty');
+  const btnClearTeachers = document.getElementById('btn-admin-clear-teachers');
+
+  function loadTeachers() {
+    const raw = localStorage.getItem('teacher_names');
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  function saveTeachers(names) {
+    localStorage.setItem('teacher_names', JSON.stringify(names));
+    document.dispatchEvent(new CustomEvent('roster-updated'));
+  }
+
+  function renderTeacherList() {
+    const names = loadTeachers();
+    teacherCountEl.textContent = `${names.length}人登録中`;
+
+    Array.from(teacherList.children).forEach(li => {
+      if (li !== teacherEmptyEl) li.remove();
+    });
+
+    if (names.length === 0) {
+      teacherEmptyEl.style.display = '';
+    } else {
+      teacherEmptyEl.style.display = 'none';
+      names.forEach((name, i) => {
+        const li   = document.createElement('li');
+        const span = document.createElement('span');
+        span.textContent = `${i + 1}. ${name}`;
+        const delBtn = document.createElement('button');
+        delBtn.className   = 'btn-admin-remove';
+        delBtn.textContent = '削除';
+        delBtn.addEventListener('click', () => {
+          const updated = loadTeachers();
+          updated.splice(i, 1);
+          saveTeachers(updated);
+          renderTeacherList();
+        });
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        teacherList.appendChild(li);
+      });
+    }
+  }
+
+  btnAddTeacher.addEventListener('click', () => {
+    const val = teacherInput.value.trim();
+    if (!val) {
+      teacherError.classList.remove('hidden');
+      return;
+    }
+    teacherError.classList.add('hidden');
+    const names = loadTeachers();
+    names.push(val);
+    saveTeachers(names);
+    teacherInput.value = '';
+    renderTeacherList();
+  });
+
+  teacherInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') btnAddTeacher.click();
+  });
+
+  btnClearTeachers.addEventListener('click', () => {
+    if (!confirm('先生の名前を全員削除しますか？')) return;
+    saveTeachers([]);
+    renderTeacherList();
+  });
+
+  // ---- 児童名簿管理 ----
   const nameInput      = document.getElementById('admin-name-input');
   const btnAddName     = document.getElementById('btn-admin-add-name');
   const nameError      = document.getElementById('admin-name-error');
@@ -1058,9 +1174,13 @@ function initAdminRoster() {
   });
 
   // 管理画面を開くたびにリストを最新化
-  document.addEventListener('admin-opened', renderList);
+  document.addEventListener('admin-opened', () => {
+    renderTeacherList();
+    renderList();
+  });
 
   // 初回描画
+  renderTeacherList();
   renderList();
 }
 

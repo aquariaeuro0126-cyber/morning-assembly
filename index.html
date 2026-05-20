@@ -405,7 +405,7 @@
                   <p class="att-no-member hidden" id="att-no-member">⚠️ <span class="kanji">管理画面で名前を登録してください</span><span class="hiragana">かんりがめんでなまえをとうろくしてください</span></p>
                 </div>
 
-                <!-- フェーズ②：呼名 -->
+                <!-- フェーズ②：呼名（生徒） -->
                 <div class="att-phase hidden" id="att-phase-calling">
                   <div class="att-progress-text" id="att-progress-text">1 / 30</div>
                   <div class="att-name-card" id="att-name-card">
@@ -421,7 +421,23 @@
                   </div>
                 </div>
 
-                <!-- フェーズ③：集計結果 -->
+                <!-- フェーズ③：先生呼び出し -->
+                <div class="att-phase hidden" id="att-phase-teacher">
+                  <div class="att-teacher-label">
+                    <span class="kanji">先生</span><span class="hiragana">せんせい</span>
+                  </div>
+                  <div class="att-teacher-name-card">
+                    <div class="att-teacher-name" id="att-teacher-name"></div>
+                  </div>
+                  <div class="att-senno-wrap">
+                    <div class="att-senno" id="att-senno">せーの！</div>
+                  </div>
+                  <button id="btn-att-teacher-next" class="btn-att-teacher-next">
+                    <span class="kanji">次へ</span><span class="hiragana">つぎへ</span> →
+                  </button>
+                </div>
+
+                <!-- フェーズ④：集計結果 -->
                 <div class="att-phase hidden" id="att-phase-result">
                   <div class="att-result-box" id="att-result-box">
                     <div class="att-result-icon" id="att-result-icon">🌟</div>
@@ -1021,24 +1037,47 @@
         <section class="admin-section">
           <h2 class="admin-section-title">📋 出席 — 名簿管理</h2>
 
-          <!-- 名前追加フォーム -->
-          <div class="admin-name-form">
-            <input type="text" id="admin-name-input" class="admin-name-input"
-              placeholder="名前を入力（例：田中はなこ）" maxlength="20" />
-            <button id="btn-admin-add-name" class="btn-admin-add">追加</button>
-          </div>
-          <p class="admin-name-error hidden" id="admin-name-error">名前を入力してください</p>
-
-          <!-- 登録済み名前リスト -->
-          <div class="admin-name-list-wrap">
-            <div class="admin-name-list-header">
-              <span id="admin-name-count">0人登録中</span>
-              <button id="btn-admin-clear-all" class="btn-admin-danger">全員削除</button>
+          <!-- 先生名登録 -->
+          <div class="admin-teacher-block">
+            <h3 class="admin-teacher-block-title">👩‍🏫 先生の名前（呼ぶ順番に登録）</h3>
+            <p class="admin-section-desc">登録した順番に呼び出します。出席開始時、先生→児童の順で呼びます。</p>
+            <div class="admin-name-form">
+              <input type="text" id="admin-teacher-input" class="admin-name-input"
+                placeholder="先生の名前（例：山田先生）" maxlength="20" />
+              <button id="btn-admin-add-teacher" class="btn-admin-add">追加</button>
             </div>
-            <ul class="admin-name-list" id="admin-name-list">
-              <!-- JS で動的に生成 -->
-              <li class="admin-name-empty" id="admin-name-empty">まだ名前が登録されていません</li>
-            </ul>
+            <p class="admin-name-error hidden" id="admin-teacher-error">名前を入力してください</p>
+            <div class="admin-name-list-wrap">
+              <div class="admin-name-list-header">
+                <span id="admin-teacher-count">0人登録中</span>
+                <button id="btn-admin-clear-teachers" class="btn-admin-danger">全員削除</button>
+              </div>
+              <ul class="admin-name-list" id="admin-teacher-list">
+                <li class="admin-name-empty" id="admin-teacher-empty">まだ先生が登録されていません</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 児童名前追加フォーム -->
+          <div class="admin-teacher-block">
+            <h3 class="admin-teacher-block-title">🧒 児童の名前</h3>
+            <div class="admin-name-form">
+              <input type="text" id="admin-name-input" class="admin-name-input"
+                placeholder="名前を入力（例：田中はなこ）" maxlength="20" />
+              <button id="btn-admin-add-name" class="btn-admin-add">追加</button>
+            </div>
+            <p class="admin-name-error hidden" id="admin-name-error">名前を入力してください</p>
+            <!-- 登録済み名前リスト -->
+            <div class="admin-name-list-wrap">
+              <div class="admin-name-list-header">
+                <span id="admin-name-count">0人登録中</span>
+                <button id="btn-admin-clear-all" class="btn-admin-danger">全員削除</button>
+              </div>
+              <ul class="admin-name-list" id="admin-name-list">
+                <!-- JS で動的に生成 -->
+                <li class="admin-name-empty" id="admin-name-empty">まだ名前が登録されていません</li>
+              </ul>
+            </div>
           </div>
         </section>
 
