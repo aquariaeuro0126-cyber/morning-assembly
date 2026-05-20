@@ -278,12 +278,14 @@ html, body {
   height: 100%;
   background: var(--color-sky);
   overflow: hidden;
+  min-width: 0;
 }
 
 .mini-app-container {
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* ========================================
@@ -569,9 +571,11 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 32px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   background: var(--color-white);
   border-top: 2px solid rgba(74,158,218,0.15);
-  height: var(--nav-height);
+  min-height: var(--nav-height);
+  flex-shrink: 0;
   box-shadow: 0 -4px 16px rgba(44,95,138,0.08);
 }
 
@@ -630,6 +634,76 @@ html, body {
 
 .dot.completed {
   background: var(--color-green);
+}
+
+/* ========================================
+   iPad / 小さい画面向け調整
+   画面高さが700px以下のとき、ミニアプリのパディングを縮小して
+   ナビゲーションボタンが必ず表示されるようにする
+======================================== */
+@media (max-height: 700px) {
+  .mini-app {
+    padding: 16px 24px 8px;
+    gap: 12px;
+  }
+  .mini-app-header {
+    padding-bottom: 10px;
+  }
+  .mini-app-header h2 {
+    font-size: 22px;
+  }
+  .nav-buttons {
+    padding: 8px 24px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    min-height: 60px;
+  }
+  .btn-nav {
+    padding: 10px 24px;
+    font-size: 16px;
+    min-width: 110px;
+  }
+}
+
+@media (max-height: 550px) {
+  .mini-app {
+    padding: 10px 16px 4px;
+    gap: 8px;
+  }
+  .mini-app-header {
+    padding-bottom: 6px;
+  }
+  .nav-buttons {
+    padding: 6px 16px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    min-height: 52px;
+  }
+  .btn-nav {
+    padding: 8px 16px;
+    font-size: 14px;
+    min-width: 90px;
+  }
+}
+
+/* iPad横向き：高さが短くなるためサイドバーを縮小 */
+@media (max-height: 700px) and (orientation: landscape) {
+  :root {
+    --sidebar-width: 120px;
+    --nav-height: 60px;
+  }
+  .sidebar-title {
+    font-size: 12px;
+    padding: 6px 6px 10px;
+  }
+  .tab-item {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .tab-num {
+    font-size: 13px;
+  }
+  .tab-label {
+    font-size: 11px;
+  }
 }
 
 /* ========================================
