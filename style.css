@@ -48,6 +48,7 @@ html, body {
   display: none;
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* iOSのアドレスバー考慮 */
   position: fixed;
   top: 0;
   left: 0;
@@ -183,6 +184,8 @@ html, body {
   display: flex;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ========================================
@@ -276,6 +279,7 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   background: var(--color-sky);
   overflow: hidden;
   min-width: 0;
@@ -634,6 +638,16 @@ html, body {
 
 .dot.completed {
   background: var(--color-green);
+}
+
+/* ========================================
+   iPad 縦向き：ミニアプリ本体を80%縮小して1画面に収める
+   幅768〜1024px かつ 縦向きのとき適用
+======================================== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .mini-app-body {
+    zoom: 0.82;
+  }
 }
 
 /* ========================================
