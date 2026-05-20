@@ -417,3 +417,87 @@ YouTube IFrame API を利用してブラウザ内で動画再生。
 - コミット `eb1aafe`（3ファイル、+416行/-122行）をGitHubにpush済み
 - 好きな曲リスト（`songFavList`）はYouTube URLのみ対応のまま（音声ファイル非対応）
 - 次のタスク：実際に使用してフィードバックをもとに改善（現時点では未定）
+
+### 2026-05-12（第5セッション：出席ミニアプリへの先生呼び出し機能の追加）
+
+#### 背景と出発点
+出席ミニアプリは「生徒の呼名 → 集計結果」の2フェーズで動作していたが、
+ユーザーから「先生の名前も呼べるようにしたい。複数名の先生を登録し、呼ぶ順番を設定できるようにしてほしい」という要望があった。
+前セッション末に要望が途中で切れていたため、画面仕様を確認してから実装に着手した。
+
+#### 仕様の確認と設計方針
+ユーザーへの確認で以下の仕様が決定した：
+- 先生呼び出し時は出席ボタン不要。名前を大きく表示するだけでよい
+- 「せーの！」をオレンジ色・大フォントで表示する
+- 「次へ」ボタンで次の先生に進む
+- フロー順序は「生徒フェーズ → 先生フェーズ → 集計結果」の順（実装中にユーザーから追加指定）
+
+**フロー構成**：
+①ready → ②calling（生徒呼名）→ ③teacher（先生呼び出し）→ ④result（集計結果）
+
+**先生が0人の場合の対応**：
+teacherフェーズをスキップして結果へ自動遷移するロジックを追加。
+管理画面で先生を未登録のまま使っても問題なく動作する。
+
+#### index.html の変更
+- フェーズ③（先生呼び出し）を `att-phase-calling` の直後・`att-phase-result` の直前に追加
+  ```html
+  <div class="att-phase hidden" id="att-phase-teacher">
+    <div class="att-teacher-label">先生（せんせい）</div>
+    <div class="att-teacher-name-card">
+      <div class="att-teacher-name" id="att-teacher-name"></div>
+    </div>
+    <div class="att-senno-wrap">
+      <div class="att-senno" id="att-senno">せーの！</div>
+    </div>
+    <button id="btn-att-teacher-next" class="btn-att-teacher-next">次へ（つぎへ）→</button>
+  </div>
+  ```
+- 管理画面に「先生の名前」登録ブロック（`admin-teacher-block`）を追加
+  - `id="admin-teacher-input"`：名前入力欄
+  - `id="btn-admin-add-teacher"`：追加ボタン
+  - `id="admin-teacher-list"`：登録済み先生一覧
+  - `id="admin-teacher-count"`：登録人数表示
+  - `id="btn-admin-clear-teachers"`：全員削除ボタン
+- 児童名前ブロックも同じ `admin-teacher-block` クラスで統一
+
+#### script.js の変更（initAttendance）
+- `phaseTeacher`・`teacherNameEl`・`btnTeacherNext` の参照を追加
+- `showAttPhase()` に `phaseTeacher` を追加（全フェーズを一括で hidden にして切り替え）
+- 生徒全員の呼名が完了した際の処理を変更：
+  - 先生リスト（`teacher_names`）を localStorage から取得
+  - 先生が0人 → 直接 `showResult()`
+  - 先生が1人以上 → `showTeacherCard()` を呼んで `phaseTeacher` を表示
+- `showTeacherCard()`：名前カードのアニメーションをリセットしてから表示
+- `btnTeacherNext` クリック：`teacherIndex` を進め、全員終了したら `showResult()`
+
+#### script.js の変更（initAdminRoster）
+- 先生名管理のロジックを追加（`loadTeachers()`・`saveTeachers()`・`renderTeacherList()`）
+- localStorage キー：`teacher_names`（JSON配列）
+- 先生リストは番号付き表示（例：「1. 山田先生」「2. 田中先生」）
+- 追加・削除・全削除・空欄バリデーションを実装
+- `roster-updated` カスタムイベントで本体ミニアプリへ通知
+
+#### style.css の変更
+先生呼び出しフェーズとその管理UIのスタイルを追加：
+- `.att-teacher-label`：「先生」ラベル（漢字・ひらがなの二段表示）
+- `.att-teacher-name-card`：名前カードのアニメーション付きコンテナ
+- `.att-teacher-name`：52px・ネイビー・太字
+- `.att-senno-wrap`：「せーの！」の中央配置ラップ
+- `.att-senno`：72px・オレンジ（`#e65100`）・太字・文字間隔4px
+- `.btn-att-teacher-next`：次へボタン（青系グラデーション）
+- `.admin-teacher-block`：管理画面の先生名登録ブロック（水色背景）
+- `.admin-teacher-block-title`：ブロックタイトル
+
+#### 遭遇した問題と解決
+
+**フロー順序の途中変更**
+- 症状：当初「先生 → 生徒」の順で実装を開始したが、作業中にユーザーから「生徒フェーズ入力後、先生フェーズに入るように」との指示があった
+- 対応：HTMLのフェーズ順序を `calling → teacher → result` に並べ直し、JSの遷移ロジックも「生徒全員完了後に先生フェーズへ移行」するよう修正
+- 教訓：フロー順序など仕様の根幹部分は実装開始前に確認しておくとよい
+
+#### 決定事項・次のタスク
+- コミット `940da15`（feat: 出席ミニアプリに先生呼び出し機能を追加）をGitHubにpush済み
+- 先生フェーズは「ボタンなし・大きな名前表示・せーの！」というシンプルな仕様に決定
+- 先生が未登録の場合は先生フェーズをスキップする設計を採用（後方互換性確保）
+- 次のタスク：実際に使用してフィードバックをもとに改善（現時点では未定）
