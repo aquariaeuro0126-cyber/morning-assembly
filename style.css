@@ -641,12 +641,12 @@ html, body {
 }
 
 /* ========================================
-   iPad 縦向き：ミニアプリ本体を80%縮小して1画面に収める
-   幅768〜1024px かつ 縦向きのとき適用
+   iPad 横向き：ミニアプリ本体を80%縮小して1画面に収める
+   横向き かつ 高さが500〜820px（iPad横向きの典型範囲）のとき適用
 ======================================== */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+@media (orientation: landscape) and (max-height: 820px) and (min-height: 500px) {
   .mini-app-body {
-    zoom: 0.82;
+    zoom: 0.8;
   }
 }
 
