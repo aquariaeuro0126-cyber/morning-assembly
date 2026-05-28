@@ -582,17 +582,25 @@
                     <span class="kanji">くじを引いています…</span>
                     <span class="hiragana">くじをひいています…</span>
                   </p>
-                  <div class="lottery-box" id="lottery-box">
-                    <div class="lottery-icon" id="lottery-icon">🎫</div>
-                    <div class="lottery-shake-text" id="lottery-shake-text">？？？</div>
+
+                  <!-- くじ引きシーン：箱 + チケット -->
+                  <div class="lottery-scene">
+                    <!-- くじ箱 -->
+                    <div class="lottery-box-wrap">
+                      <div class="lottery-box" id="lottery-box">📦</div>
+                      <div class="lottery-shake-text" id="lottery-shake-text">？？？</div>
+                    </div>
+
+                    <!-- 紙くじ（箱から飛び出してひっくり返す） -->
+                    <div class="lottery-ticket-wrap" id="lottery-ticket-wrap">
+                      <div class="lottery-ticket" id="lottery-ticket">
+                        <div class="lottery-ticket-front">🎫</div>
+                        <div class="lottery-ticket-back" id="lottery-ticket-back"></div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="lottery-result hidden" id="lottery-result">
-                    <div class="lottery-result-badge" id="lottery-result-badge"></div>
-                    <div class="lottery-result-text" id="lottery-result-text"></div>
-                  </div>
-                  <button id="btn-song-lottery-next" class="btn-song-start hidden" id="btn-song-lottery-next">
-                    <span class="kanji">歌いにいく</span><span class="hiragana">うたいにいく</span> ▶
-                  </button>
+
+                  <button id="btn-song-lottery-next" class="btn-song-start hidden">▶</button>
                 </div>
 
                 <!-- フェーズ③：好きな曲を選ぶ（当たりのとき） -->

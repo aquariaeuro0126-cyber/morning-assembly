@@ -1806,13 +1806,12 @@ function initSong() {
   const btnLottery      = document.getElementById('btn-song-lottery');
   const noDataMsg       = document.getElementById('song-no-data');
 
-  const lotteryBox         = document.getElementById('lottery-box');
-  const lotteryIcon        = document.getElementById('lottery-icon');
-  const lotteryShakeText   = document.getElementById('lottery-shake-text');
-  const lotteryResult      = document.getElementById('lottery-result');
-  const lotteryResultBadge = document.getElementById('lottery-result-badge');
-  const lotteryResultText  = document.getElementById('lottery-result-text');
-  const btnLotteryNext     = document.getElementById('btn-song-lottery-next');
+  const lotteryBox        = document.getElementById('lottery-box');
+  const lotteryShakeText  = document.getElementById('lottery-shake-text');
+  const lotteryTicketWrap = document.getElementById('lottery-ticket-wrap');
+  const lotteryTicket     = document.getElementById('lottery-ticket');
+  const lotteryTicketBack = document.getElementById('lottery-ticket-back');
+  const btnLotteryNext    = document.getElementById('btn-song-lottery-next');
 
   const songSelectList = document.getElementById('song-select-list');
   const songNowTitle   = document.getElementById('song-now-title');
@@ -1870,11 +1869,17 @@ function initSong() {
   btnLottery.addEventListener('click', () => {
     showSongPhase(phaseLottery);
 
-    lotteryBox.style.animation = 'lotteryShake 0.4s ease infinite';
-    lotteryIcon.textContent = '🎫';
+    // リセット
+    lotteryBox.className      = 'lottery-box';
     lotteryShakeText.textContent = '？？？';
-    lotteryResult.classList.add('hidden');
+    lotteryTicketWrap.className  = 'lottery-ticket-wrap';   // rising クラスなし
+    lotteryTicket.className      = 'lottery-ticket';        // flipped クラスなし
+    lotteryTicketBack.innerHTML  = '';
+    lotteryTicketBack.className  = 'lottery-ticket-back';
     btnLotteryNext.classList.add('hidden');
+
+    // Stage1: 箱が揺れる（1.5s）
+    lotteryBox.classList.add('shaking');
 
     setTimeout(() => {
       const winCount   = loadWinCount();
@@ -1882,35 +1887,52 @@ function initSong() {
       const monthly    = loadMonthly();
       const hasContent = monthly && (monthly.title || monthly.url || monthly.hasAudio);
 
-      lotteryBox.style.animation = 'none';
+      // 箱の揺れを止め「開く」演出
+      lotteryBox.classList.remove('shaking');
+      lotteryBox.classList.add('opened');
+      lotteryShakeText.textContent = '';
 
+      // チケット裏面の内容を設定
       if (isWin) {
-        lotteryIcon.textContent        = '🎊';
-        lotteryShakeText.textContent   = '当たり！！';
-        lotteryResultBadge.textContent = '🎉';
-        lotteryResultText.textContent  = '好きな歌を選んでいいよ！';
-
-        lotteryResult.classList.remove('hidden');
-        btnLotteryNext.textContent = '曲をえらぶ ▶';
-        btnLotteryNext.classList.remove('hidden');
-        btnLotteryNext.dataset.result = 'win';
+        lotteryTicketBack.classList.add('ticket-win');
+        lotteryTicketBack.innerHTML =
+          '<div class="ticket-result-icon">🎉</div>' +
+          '<div class="ticket-result-label">あたり！</div>' +
+          '<div class="ticket-result-sub">すきなうたを<br>えらぼう！</div>';
+      } else if (hasContent) {
+        lotteryTicketBack.classList.add('ticket-monthly');
+        lotteryTicketBack.innerHTML =
+          '<div class="ticket-result-icon">📀</div>' +
+          '<div class="ticket-result-label">こんげつのうた！</div>';
       } else {
-        lotteryIcon.textContent        = '😢';
-        lotteryShakeText.textContent   = 'はずれ…';
-        lotteryResultBadge.textContent = '📀';
-        if (hasContent) {
-          lotteryResultText.textContent = '今月の歌を歌おう！';
-          btnLotteryNext.textContent    = '歌いにいく ▶';
-          btnLotteryNext.dataset.result = 'lose';
-        } else {
-          // 今月の歌が未登録の場合
-          lotteryResultText.textContent = '今月の歌はまだ登録されていないよ！';
-          btnLotteryNext.textContent    = 'もどる';
-          btnLotteryNext.dataset.result = 'lose-no-song';
-        }
-        lotteryResult.classList.remove('hidden');
-        btnLotteryNext.classList.remove('hidden');
+        lotteryTicketBack.classList.add('ticket-none');
+        lotteryTicketBack.innerHTML =
+          '<div class="ticket-result-icon">🎵</div>' +
+          '<div class="ticket-result-label">まだ登録されていないよ</div>';
       }
+
+      // Stage2: チケットが箱から飛び出す（0.55s）
+      lotteryTicketWrap.classList.add('rising');
+
+      // Stage3: チケットをひっくり返す（飛び出し完了後）
+      setTimeout(() => {
+        lotteryTicket.classList.add('flipped');
+
+        // Stage4: 「次へ」ボタンを表示（フリップ完了後）
+        setTimeout(() => {
+          if (isWin) {
+            btnLotteryNext.textContent = '曲をえらぶ ▶';
+            btnLotteryNext.dataset.result = 'win';
+          } else if (hasContent) {
+            btnLotteryNext.textContent = '歌いにいく ▶';
+            btnLotteryNext.dataset.result = 'lose';
+          } else {
+            btnLotteryNext.textContent = 'もどる';
+            btnLotteryNext.dataset.result = 'lose-no-song';
+          }
+          btnLotteryNext.classList.remove('hidden');
+        }, 750);
+      }, 580);
     }, 1500);
   });
 
