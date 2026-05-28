@@ -254,6 +254,11 @@
                     <div class="result-label">点！</div>
                   </div>
                   <div class="result-message" id="result-message"></div>
+                  <!-- 3秒カウントダウン → すわりましょう。 -->
+                  <div id="voice-suwarimashoo-wrap" class="voice-suwarimashoo-wrap hidden">
+                    <div id="voice-suwarimashoo-count" class="voice-suwarimashoo-count"></div>
+                    <div id="voice-suwarimashoo-text" class="voice-suwarimashoo-text hidden">すわりましょう。</div>
+                  </div>
                   <button id="btn-voice-retry" class="btn-secondary btn-retry">もう一度</button>
                 </div>
 
@@ -283,39 +288,49 @@
                     <span class="kanji">今日の日付と曜日をえらぼう！</span>
                     <span class="hiragana">きょうのひづけとようびをえらぼう！</span>
                   </p>
+                  <p class="dw-slide-hint">
+                    <span class="kanji">↕ 上下にスライドして数字を変えよう</span>
+                    <span class="hiragana">↕ うえしたにスライドしてすうじをかえよう</span>
+                  </p>
                   <div class="dw-sliders">
 
                     <!-- 月 -->
                     <div class="dw-slider-col">
-                      <button class="dw-arrow dw-arrow-up" data-target="month">▲</button>
-                      <div class="dw-value-box" id="dw-month-display">4</div>
+                      <div class="dw-drum" id="dw-month-drum" data-target="month">
+                        <div class="dw-drum-arrow">▲</div>
+                        <div class="dw-value-box" id="dw-month-display">4</div>
+                        <div class="dw-drum-arrow">▼</div>
+                      </div>
                       <div class="dw-unit">
                         <span class="kanji">月</span>
                         <span class="hiragana">がつ</span>
                       </div>
-                      <button class="dw-arrow dw-arrow-down" data-target="month">▼</button>
                     </div>
 
                     <!-- 日 -->
                     <div class="dw-slider-col">
-                      <button class="dw-arrow dw-arrow-up" data-target="day">▲</button>
-                      <div class="dw-value-box" id="dw-day-display">1</div>
+                      <div class="dw-drum" id="dw-day-drum" data-target="day">
+                        <div class="dw-drum-arrow">▲</div>
+                        <div class="dw-value-box" id="dw-day-display">1</div>
+                        <div class="dw-drum-arrow">▼</div>
+                      </div>
                       <div class="dw-unit">
                         <span class="kanji">日</span>
                         <span class="hiragana">にち</span>
                       </div>
-                      <button class="dw-arrow dw-arrow-down" data-target="day">▼</button>
                     </div>
 
                     <!-- 曜日 -->
                     <div class="dw-slider-col">
-                      <button class="dw-arrow dw-arrow-up" data-target="weekday">▲</button>
-                      <div class="dw-value-box dw-value-box-wide" id="dw-weekday-display">月</div>
+                      <div class="dw-drum" id="dw-weekday-drum" data-target="weekday">
+                        <div class="dw-drum-arrow">▲</div>
+                        <div class="dw-value-box dw-value-box-wide" id="dw-weekday-display">月</div>
+                        <div class="dw-drum-arrow">▼</div>
+                      </div>
                       <div class="dw-unit">
                         <span class="kanji">曜日</span>
                         <span class="hiragana">ようび</span>
                       </div>
-                      <button class="dw-arrow dw-arrow-down" data-target="weekday">▼</button>
                     </div>
 
                   </div>
@@ -474,15 +489,18 @@
 
               <div class="kyushoku-area">
 
-                <!-- フェーズ①：スタート -->
+                <!-- フェーズ①：献立確認 -->
                 <div class="kyu-phase" id="kyu-phase-ready">
                   <p class="kyu-guide">
-                    <span class="kanji">今日の献立クイズをやってみよう！</span>
-                    <span class="hiragana">きょうのこんだてクイズをやってみよう！</span>
+                    <span class="kanji">今日の献立はこれ！</span>
+                    <span class="hiragana">きょうのこんだてはこれ！</span>
                   </p>
                   <div class="kyu-today-label" id="kyu-today-label">📅 読み込み中...</div>
+                  <div class="kyu-menu-preview" id="kyu-menu-preview">
+                    <!-- JSで今日の献立を動的表示 -->
+                  </div>
                   <button id="btn-kyu-start" class="btn-kyu-start">
-                    🍱 <span class="kanji">クイズをはじめる！</span><span class="hiragana">クイズをはじめる！</span>
+                    ✅ <span class="kanji">こんだてをかくにんした！</span><span class="hiragana">こんだてをかくにんした！</span>
                   </button>
                   <p class="kyu-no-menu hidden" id="kyu-no-menu">
                     ⚠️ <span class="kanji">管理画面で献立を登録してください</span><span class="hiragana">かんりがめんでこんだてをとうろくしてください</span>
@@ -922,7 +940,7 @@
           <div class="admin-menu-edit hidden" id="admin-menu-edit">
             <div class="admin-menu-edit-inner">
               <h3 class="admin-menu-edit-title" id="admin-menu-edit-title">献立を編集</h3>
-              <p class="admin-menu-edit-desc">献立の品目を1行ずつ入力してください（最大8品）</p>
+              <p class="admin-menu-edit-desc">カテゴリーごとに献立を入力してください（空欄は省略されます）</p>
               <div id="admin-menu-items-list" class="admin-menu-items-list">
                 <!-- JS で入力欄を生成 -->
               </div>

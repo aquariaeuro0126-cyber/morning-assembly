@@ -358,17 +358,22 @@ let maxVolume       = 0;       // 測定中の最大音量（0〜255）
 // フェーズ要素（DOM読み込み後に安全に取得）
 let phaseReady, phaseCountdown, phaseMeasuring, phaseResult;
 let countdownNum, volumeFill, measureTimer, resultScore, resultMessage;
+let suwarimashooWrap, suwarimashooCount, suwarimashooText;
+let suwarimashooTimer = null;  // カウントダウンタイマー（もう一度ボタン用にクリア）
 
 function initVoiceElements() {
-  phaseReady     = document.getElementById('voice-phase-ready');
-  phaseCountdown = document.getElementById('voice-phase-countdown');
-  phaseMeasuring = document.getElementById('voice-phase-measuring');
-  phaseResult    = document.getElementById('voice-phase-result');
-  countdownNum   = document.getElementById('countdown-number');
-  volumeFill     = document.getElementById('volume-meter-fill');
-  measureTimer   = document.getElementById('measure-timer');
-  resultScore    = document.getElementById('result-score');
-  resultMessage  = document.getElementById('result-message');
+  phaseReady        = document.getElementById('voice-phase-ready');
+  phaseCountdown    = document.getElementById('voice-phase-countdown');
+  phaseMeasuring    = document.getElementById('voice-phase-measuring');
+  phaseResult       = document.getElementById('voice-phase-result');
+  countdownNum      = document.getElementById('countdown-number');
+  volumeFill        = document.getElementById('volume-meter-fill');
+  measureTimer      = document.getElementById('measure-timer');
+  resultScore       = document.getElementById('result-score');
+  resultMessage     = document.getElementById('result-message');
+  suwarimashooWrap  = document.getElementById('voice-suwarimashoo-wrap');
+  suwarimashooCount = document.getElementById('voice-suwarimashoo-count');
+  suwarimashooText  = document.getElementById('voice-suwarimashoo-text');
 
   const btnVoiceStart = document.getElementById('btn-voice-start');
   const btnVoiceRetry = document.getElementById('btn-voice-retry');
@@ -385,6 +390,11 @@ function initVoiceElements() {
 
   if (btnVoiceRetry) {
     btnVoiceRetry.addEventListener('click', () => {
+      // すわりましょう。のカウントダウンをキャンセル
+      if (suwarimashooTimer) { clearInterval(suwarimashooTimer); suwarimashooTimer = null; }
+      if (suwarimashooWrap)  suwarimashooWrap.classList.add('hidden');
+      if (suwarimashooText)  { suwarimashooText.classList.add('hidden'); suwarimashooText.style.animation = ''; }
+      if (suwarimashooCount) suwarimashooCount.textContent = '';
       stopMic();
       maxVolume = 0;
       if (volumeFill) volumeFill.style.width = '0%';
@@ -491,6 +501,37 @@ function showResult() {
   resultMessage.style.color = color;
 
   showVoicePhase(phaseResult);
+
+  // 3秒カウントダウン → すわりましょう。
+  if (suwarimashooWrap && suwarimashooCount && suwarimashooText) {
+    suwarimashooWrap.classList.remove('hidden');
+    suwarimashooText.classList.add('hidden');
+    suwarimashooText.style.animation = '';
+    let count = 3;
+    suwarimashooCount.textContent = count;
+    suwarimashooCount.style.animation = 'none';
+    suwarimashooCount.offsetHeight; // reflow
+    suwarimashooCount.style.animation = 'countPop 0.6s ease';
+
+    if (suwarimashooTimer) clearInterval(suwarimashooTimer);
+    suwarimashooTimer = setInterval(() => {
+      count--;
+      if (count <= 0) {
+        clearInterval(suwarimashooTimer);
+        suwarimashooTimer = null;
+        suwarimashooCount.textContent = '';
+        suwarimashooText.classList.remove('hidden');
+        suwarimashooText.style.animation = 'none';
+        suwarimashooText.offsetHeight; // reflow
+        suwarimashooText.style.animation = 'scorePopIn 0.5s ease forwards';
+      } else {
+        suwarimashooCount.textContent = count;
+        suwarimashooCount.style.animation = 'none';
+        suwarimashooCount.offsetHeight; // reflow
+        suwarimashooCount.style.animation = 'countPop 0.6s ease';
+      }
+    }, 1000);
+  }
 }
 
 // マイク停止・リソース解放
@@ -700,25 +741,81 @@ function initDateWeather() {
   }
   updateDisplay();
 
-  // --- ▲▼ ボタンのイベント登録 ---
+  // --- ドラム式スライドUI ---
   function wrapIdx(idx, len) {
     return (idx + len) % len;
   }
 
-  document.querySelectorAll('.dw-arrow').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.target;
-      const dir    = btn.classList.contains('dw-arrow-up') ? -1 : 1;
+  function updateByDrum(target, change) {
+    if (target === 'month') {
+      monthIdx = wrapIdx(monthIdx + change, MONTHS.length);
+    } else if (target === 'day') {
+      dayIdx = wrapIdx(dayIdx + change, DAYS.length);
+    } else if (target === 'weekday') {
+      weekdayIdx = wrapIdx(weekdayIdx + change, WEEKDAY_LIST.length);
+    }
+    updateDisplay();
+  }
 
-      if (target === 'month') {
-        monthIdx = wrapIdx(monthIdx + dir, MONTHS.length);
-      } else if (target === 'day') {
-        dayIdx = wrapIdx(dayIdx + dir, DAYS.length);
-      } else if (target === 'weekday') {
-        weekdayIdx = wrapIdx(weekdayIdx + dir, WEEKDAY_LIST.length);
+  const DRUM_THRESHOLD = 35;  // 1ステップあたりのpx
+  let activeDrum    = null;
+  let drumStartY    = 0;
+  let drumLastDelta = 0;
+
+  // 各ドラムへの touchstart / mousedown 登録
+  document.querySelectorAll('.dw-drum').forEach(drum => {
+    drum.addEventListener('touchstart', e => {
+      e.preventDefault();
+      activeDrum    = drum;
+      drumStartY    = e.touches[0].clientY;
+      drumLastDelta = 0;
+      drum.classList.add('dw-drum-active');
+    }, { passive: false });
+
+    drum.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (activeDrum !== drum) return;
+      const delta      = drumStartY - e.touches[0].clientY;
+      const stepped    = Math.trunc(delta / DRUM_THRESHOLD);
+      const prevStepped = Math.trunc(drumLastDelta / DRUM_THRESHOLD);
+      const change     = stepped - prevStepped;
+      if (change !== 0) {
+        updateByDrum(drum.dataset.target, change);
+        drumLastDelta = delta;
       }
-      updateDisplay();
+    }, { passive: false });
+
+    drum.addEventListener('touchend', () => {
+      activeDrum = null;
+      drum.classList.remove('dw-drum-active');
+      drumLastDelta = 0;
     });
+
+    drum.addEventListener('mousedown', e => {
+      activeDrum    = drum;
+      drumStartY    = e.clientY;
+      drumLastDelta = 0;
+      drum.classList.add('dw-drum-active');
+    });
+  });
+
+  // document レベルの mousemove / mouseup（PC操作用）
+  document.addEventListener('mousemove', e => {
+    if (!activeDrum || !phaseDate || phaseDate.classList.contains('hidden')) return;
+    const delta       = drumStartY - e.clientY;
+    const stepped     = Math.trunc(delta / DRUM_THRESHOLD);
+    const prevStepped = Math.trunc(drumLastDelta / DRUM_THRESHOLD);
+    const change      = stepped - prevStepped;
+    if (change !== 0) {
+      updateByDrum(activeDrum.dataset.target, change);
+      drumLastDelta = delta;
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (activeDrum) activeDrum.classList.remove('dw-drum-active');
+    activeDrum    = null;
+    drumLastDelta = 0;
   });
 
   // --- フェーズ切り替え ---
@@ -1189,8 +1286,9 @@ function initAdminRoster() {
 // ----------------------------------------
 function initKyushoku() {
   const STORAGE_KEY = 'kyushokuMenus';
-  // 5日分のデータ構造: [ { label: '月曜日', items: ['ご飯', ...] }, ... ]
-  const DAY_LABELS = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
+  const DAY_LABELS  = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
+  const CATEGORIES  = ['主食', 'おかず', 'スープ', '野菜', 'デザート', '飲み物', 'その他'];
+  const CATEGORY_ICONS = { '主食': '🍚', 'おかず': '🍖', 'スープ': '🍲', '野菜': '🥗', 'デザート': '🍮', '飲み物': '🥛', 'その他': '🍴' };
 
   // ダミー候補（クイズの不正解選択肢として使用）
   const DUMMY_ITEMS = [
@@ -1201,13 +1299,24 @@ function initKyushoku() {
   ];
 
   // --- データ操作 ---
+  function emptyCategories() {
+    return Object.fromEntries(CATEGORIES.map(c => [c, '']));
+  }
+
   function loadMenus() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return DAY_LABELS.map(label => ({ label, items: [] }));
-      return JSON.parse(raw);
+      if (!raw) return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
+      const parsed = JSON.parse(raw);
+      // マイグレーション：旧形式（items配列）→ 新形式（categories）
+      return parsed.map(m => {
+        if (!m.categories) {
+          return { label: m.label, categories: emptyCategories() };
+        }
+        return m;
+      });
     } catch {
-      return DAY_LABELS.map(label => ({ label, items: [] }));
+      return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
     }
   }
 
@@ -1215,10 +1324,15 @@ function initKyushoku() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
   }
 
+  // categories から品目配列を取得（空欄除外）
+  function getItems(menu) {
+    if (!menu.categories) return menu.items || [];
+    return Object.values(menu.categories).filter(v => v && v.trim());
+  }
+
   // 今日の曜日に対応する献立を返す（月〜金、0ベース）
   function getTodayMenu(menus) {
     const day = new Date().getDay(); // 0=日, 1=月, ... 6=土
-    // 月〜金 → インデックス 0〜4
     const idx = day - 1;
     if (idx < 0 || idx > 4) return null; // 土日は null
     return menus[idx];
@@ -1235,20 +1349,21 @@ function initKyushoku() {
   }
 
   // --- ミニアプリ UI ---
-  const phaseReady  = document.getElementById('kyu-phase-ready');
-  const phaseQuiz   = document.getElementById('kyu-phase-quiz');
-  const phaseMenu   = document.getElementById('kyu-phase-menu');
-  const todayLabel  = document.getElementById('kyu-today-label');
-  const btnStart    = document.getElementById('btn-kyu-start');
-  const noMenuMsg   = document.getElementById('kyu-no-menu');
-  const quizGrid    = document.getElementById('kyu-quiz-grid');
-  const quizResult  = document.getElementById('kyu-quiz-result');
-  const resultIcon  = document.getElementById('kyu-result-icon');
-  const resultText  = document.getElementById('kyu-result-text');
-  const nextButtons = document.getElementById('kyu-next-buttons');
-  const btnNext     = document.getElementById('btn-kyu-next');
-  const menuBox     = document.getElementById('kyu-menu-box');
-  const btnRetry    = document.getElementById('btn-kyu-retry');
+  const phaseReady    = document.getElementById('kyu-phase-ready');
+  const phaseQuiz     = document.getElementById('kyu-phase-quiz');
+  const phaseMenu     = document.getElementById('kyu-phase-menu');
+  const todayLabel    = document.getElementById('kyu-today-label');
+  const menuPreview   = document.getElementById('kyu-menu-preview');
+  const btnStart      = document.getElementById('btn-kyu-start');
+  const noMenuMsg     = document.getElementById('kyu-no-menu');
+  const quizGrid      = document.getElementById('kyu-quiz-grid');
+  const quizResult    = document.getElementById('kyu-quiz-result');
+  const resultIcon    = document.getElementById('kyu-result-icon');
+  const resultText    = document.getElementById('kyu-result-text');
+  const nextButtons   = document.getElementById('kyu-next-buttons');
+  const btnNext       = document.getElementById('btn-kyu-next');
+  const menuBox       = document.getElementById('kyu-menu-box');
+  const btnRetry      = document.getElementById('btn-kyu-retry');
 
   function showKyuPhase(id) {
     [phaseReady, phaseQuiz, phaseMenu].forEach(el => el.classList.add('hidden'));
@@ -1262,25 +1377,42 @@ function initKyushoku() {
     const day     = new Date().getDay();
     todayLabel.textContent = `📅 今日は${dayName[day]}曜日`;
 
-    if (!today || today.items.length === 0) {
+    const items = today ? getItems(today) : [];
+
+    if (!today || items.length === 0) {
       btnStart.disabled = true;
       noMenuMsg.classList.remove('hidden');
+      if (menuPreview) menuPreview.innerHTML = '';
     } else {
       btnStart.disabled = false;
       noMenuMsg.classList.add('hidden');
+      // 献立プレビュー表示（カテゴリー別）
+      if (menuPreview) {
+        menuPreview.innerHTML = '';
+        CATEGORIES.forEach(cat => {
+          const val = today.categories && today.categories[cat];
+          if (!val || !val.trim()) return;
+          const chip = document.createElement('div');
+          chip.className = 'kyu-preview-item';
+          chip.innerHTML = `<span class="kyu-preview-icon">${CATEGORY_ICONS[cat] || '🍴'}</span>${val}`;
+          menuPreview.appendChild(chip);
+        });
+      }
     }
   }
 
   btnStart.addEventListener('click', () => {
-    const menus  = loadMenus();
-    const today  = getTodayMenu(menus);
-    if (!today || today.items.length === 0) return;
+    const menus = loadMenus();
+    const today = getTodayMenu(menus);
+    if (!today) return;
+    const items = getItems(today);
+    if (items.length === 0) return;
 
     // 正解：今日の献立からランダムに1品
-    const correct = today.items[Math.floor(Math.random() * today.items.length)];
+    const correct = items[Math.floor(Math.random() * items.length)];
 
     // ダミー：今日の献立に含まれないDUMMY_ITEMSから3つ選ぶ
-    const dummies = shuffle(DUMMY_ITEMS.filter(d => !today.items.includes(d))).slice(0, 3);
+    const dummies = shuffle(DUMMY_ITEMS.filter(d => !items.includes(d))).slice(0, 3);
 
     // 4択をシャッフル
     const choices = shuffle([correct, ...dummies]);
@@ -1319,7 +1451,7 @@ function initKyushoku() {
     });
 
     // 献立一覧フェーズ用に保存
-    btnNext.dataset.items = JSON.stringify(today.items);
+    btnNext.dataset.items = JSON.stringify(items);
 
     showKyuPhase('kyu-phase-quiz');
   });
@@ -1362,22 +1494,40 @@ function initKyushoku() {
 // 管理画面：給食献立管理
 // ----------------------------------------
 function initAdminKyushoku() {
-  const STORAGE_KEY = 'kyushokuMenus';
-  const DAY_LABELS  = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
-  const MAX_ITEMS   = 8;
+  const STORAGE_KEY    = 'kyushokuMenus';
+  const DAY_LABELS     = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
+  const CATEGORIES     = ['主食', 'おかず', 'スープ', '野菜', 'デザート', '飲み物', 'その他'];
+  const CATEGORY_ICONS = { '主食': '🍚', 'おかず': '🍖', 'スープ': '🍲', '野菜': '🥗', 'デザート': '🍮', '飲み物': '🥛', 'その他': '🍴' };
+
+  function emptyCategories() {
+    return Object.fromEntries(CATEGORIES.map(c => [c, '']));
+  }
 
   function loadMenus() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return DAY_LABELS.map(label => ({ label, items: [] }));
-      return JSON.parse(raw);
+      if (!raw) return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
+      const parsed = JSON.parse(raw);
+      // マイグレーション：旧形式（items配列）→ 新形式（categories）
+      return parsed.map(m => {
+        if (!m.categories) {
+          return { label: m.label, categories: emptyCategories() };
+        }
+        return m;
+      });
     } catch {
-      return DAY_LABELS.map(label => ({ label, items: [] }));
+      return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
     }
   }
 
   function saveMenus(menus) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
+  }
+
+  // categories から品目配列を取得
+  function getItems(menu) {
+    if (!menu.categories) return menu.items || [];
+    return Object.values(menu.categories).filter(v => v && v.trim());
   }
 
   const daysContainer = document.getElementById('admin-menu-days');
@@ -1394,8 +1544,9 @@ function initAdminKyushoku() {
     daysContainer.innerHTML = '';
 
     menus.forEach((menu, i) => {
-      const card = document.createElement('div');
-      card.className = 'admin-menu-day-card' + (menu.items.length > 0 ? ' has-menu' : '');
+      const items = getItems(menu);
+      const card  = document.createElement('div');
+      card.className = 'admin-menu-day-card' + (items.length > 0 ? ' has-menu' : '');
 
       const label = document.createElement('div');
       label.className = 'admin-menu-day-label';
@@ -1404,13 +1555,13 @@ function initAdminKyushoku() {
       const content = document.createElement('div');
       content.className = 'admin-menu-day-content';
 
-      if (menu.items.length === 0) {
+      if (items.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'admin-menu-empty-text';
         empty.textContent = '未登録';
         content.appendChild(empty);
       } else {
-        menu.items.forEach(item => {
+        items.forEach(item => {
           const chip = document.createElement('span');
           chip.className = 'admin-menu-chip';
           chip.textContent = item;
@@ -1437,25 +1588,30 @@ function initAdminKyushoku() {
 
     editTitle.textContent = `🍱 ${menu.label} の献立を編集`;
 
-    // 入力欄を MAX_ITEMS 個生成
+    // カテゴリー別入力欄を生成
     itemsList.innerHTML = '';
-    for (let i = 0; i < MAX_ITEMS; i++) {
+    CATEGORIES.forEach(cat => {
       const row = document.createElement('div');
-      row.className = 'admin-menu-item-row';
+      row.className = 'admin-menu-item-row admin-menu-category-row';
+
+      const lbl = document.createElement('label');
+      lbl.className = 'admin-menu-category-label';
+      lbl.textContent = `${CATEGORY_ICONS[cat] || '🍴'} ${cat}`;
 
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'admin-menu-item-input';
-      input.placeholder = `品目 ${i + 1}（空欄は除外）`;
+      input.dataset.category = cat;
+      input.placeholder = `${cat}を入力（空欄は省略）`;
       input.maxLength = 30;
-      input.value = menu.items[i] || '';
+      input.value = (menu.categories && menu.categories[cat]) || '';
 
+      row.appendChild(lbl);
       row.appendChild(input);
       itemsList.appendChild(row);
-    }
+    });
 
     editArea.classList.remove('hidden');
-    // 最初の入力欄にフォーカス
     itemsList.querySelector('input')?.focus();
   }
 
@@ -1467,20 +1623,19 @@ function initAdminKyushoku() {
   btnSave.addEventListener('click', () => {
     if (editingIndex < 0) return;
 
-    const inputs = itemsList.querySelectorAll('.admin-menu-item-input');
-    const items  = [];
-    inputs.forEach(inp => {
-      const val = inp.value.trim();
-      if (val) items.push(val);
+    const categories = {};
+    itemsList.querySelectorAll('.admin-menu-item-input').forEach(inp => {
+      categories[inp.dataset.category] = inp.value.trim();
     });
 
     const menus = loadMenus();
-    menus[editingIndex].items = items;
+    menus[editingIndex].categories = categories;
     saveMenus(menus);
 
     editArea.classList.add('hidden');
     editingIndex = -1;
     renderDayCards();
+    document.dispatchEvent(new CustomEvent('roster-updated'));
   });
 
   // 管理画面を開くたびにリストを再描画
