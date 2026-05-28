@@ -1799,18 +1799,18 @@ function initSong() {
 
   // --- スタート画面を更新 ---
   function refreshReady() {
-    const monthly = loadMonthly();
+    const monthly  = loadMonthly();
     const monthKey = String(new Date().getMonth() + 1);
     const hasContent = monthly && (monthly.title || monthly.hasAudio);
     if (!hasContent) {
       thisMonthLabel.textContent = '📀 今月の歌：未登録';
-      btnLottery.disabled = true;
       noDataMsg.classList.remove('hidden');
     } else {
       thisMonthLabel.textContent = `📀 今月の歌：${monthly.title || '（タイトル未設定）'}`;
-      btnLottery.disabled = false;
       noDataMsg.classList.add('hidden');
     }
+    // くじは常に引ける
+    btnLottery.disabled = false;
     // 今月の月番号をボタンに保存（playSong で使用）
     btnLottery.dataset.monthKey = monthKey;
   }
@@ -1826,8 +1826,10 @@ function initSong() {
     btnLotteryNext.classList.add('hidden');
 
     setTimeout(() => {
-      const winCount = loadWinCount();
-      const isWin    = Math.random() < (winCount / LOTTERY_TOTAL);
+      const winCount   = loadWinCount();
+      const isWin      = Math.random() < (winCount / LOTTERY_TOTAL);
+      const monthly    = loadMonthly();
+      const hasContent = monthly && (monthly.title || monthly.url || monthly.hasAudio);
 
       lotteryBox.style.animation = 'none';
 
@@ -1845,12 +1847,18 @@ function initSong() {
         lotteryIcon.textContent        = '😢';
         lotteryShakeText.textContent   = 'はずれ…';
         lotteryResultBadge.textContent = '📀';
-        lotteryResultText.textContent  = '今月の歌を歌おう！';
-
+        if (hasContent) {
+          lotteryResultText.textContent = '今月の歌を歌おう！';
+          btnLotteryNext.textContent    = '歌いにいく ▶';
+          btnLotteryNext.dataset.result = 'lose';
+        } else {
+          // 今月の歌が未登録の場合
+          lotteryResultText.textContent = '今月の歌はまだ登録されていないよ！';
+          btnLotteryNext.textContent    = 'もどる';
+          btnLotteryNext.dataset.result = 'lose-no-song';
+        }
         lotteryResult.classList.remove('hidden');
-        btnLotteryNext.textContent = '歌いにいく ▶';
         btnLotteryNext.classList.remove('hidden');
-        btnLotteryNext.dataset.result = 'lose';
       }
     }, 1500);
   });
@@ -1859,10 +1867,23 @@ function initSong() {
   btnLotteryNext.addEventListener('click', () => {
     const result   = btnLotteryNext.dataset.result;
     const monthKey = btnLottery.dataset.monthKey || String(new Date().getMonth() + 1);
+    if (result === 'lose-no-song') {
+      // 今月の歌が未登録 → スタート画面に戻る
+      refreshReady();
+      showSongPhase(phaseReady);
+      return;
+    }
     if (result === 'win') {
       const favList = loadFavList();
       if (favList.length === 0) {
-        playSong(loadMonthly(), monthKey);
+        const monthly = loadMonthly();
+        if (monthly && (monthly.title || monthly.url || monthly.hasAudio)) {
+          playSong(monthly, monthKey);
+        } else {
+          // 好きな曲もなし・今月の歌もなし → スタートに戻る
+          refreshReady();
+          showSongPhase(phaseReady);
+        }
         return;
       }
       buildSelectList(favList);
