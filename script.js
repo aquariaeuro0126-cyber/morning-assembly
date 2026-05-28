@@ -1931,6 +1931,8 @@ function initSong() {
             btnLotteryNext.dataset.result = 'lose-no-song';
           }
           btnLotteryNext.classList.remove('hidden');
+          // スクロールアウトしていても確実に見えるようにする
+          btnLotteryNext.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 750);
       }, 580);
     }, 1500);

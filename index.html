@@ -583,16 +583,15 @@
                     <span class="hiragana">くじをひいています…</span>
                   </p>
 
-                  <!-- くじ引きシーン：箱 + チケット -->
-                  <div class="lottery-scene">
-                    <!-- くじ箱 -->
-                    <div class="lottery-box-wrap">
-                      <div class="lottery-box" id="lottery-box">📦</div>
-                      <div class="lottery-shake-text" id="lottery-shake-text">？？？</div>
-                    </div>
+                  <!-- くじ箱 -->
+                  <div class="lottery-box-wrap">
+                    <div class="lottery-box" id="lottery-box">📦</div>
+                    <div class="lottery-shake-text" id="lottery-shake-text">？？？</div>
+                  </div>
 
-                    <!-- 紙くじ（箱から飛び出してひっくり返す） -->
-                    <div class="lottery-ticket-wrap" id="lottery-ticket-wrap">
+                  <!-- 紙くじ（ポップイン → カードフリップ） -->
+                  <div class="lottery-ticket-wrap" id="lottery-ticket-wrap">
+                    <div class="lottery-ticket-perspective">
                       <div class="lottery-ticket" id="lottery-ticket">
                         <div class="lottery-ticket-front">🎫</div>
                         <div class="lottery-ticket-back" id="lottery-ticket-back"></div>

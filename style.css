@@ -2287,34 +2287,22 @@ html, body {
 }
 
 /* ============================================================
-   くじ引き：チケットフリップアニメーション
+   くじ引き：チケットフリップアニメーション（ポップイン方式）
    ============================================================ */
 
-/* シーン全体のコンテナ */
-.lottery-scene {
-  position: relative;
-  width: 100%;
-  height: 260px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 16px;
-}
-
-/* くじ箱 */
+/* くじ箱ラッパー */
 .lottery-box-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  z-index: 1;
 }
 
 .lottery-box {
-  font-size: 92px;
+  font-size: 88px;
   line-height: 1;
   display: block;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22));
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.2));
 }
 
 .lottery-box.shaking {
@@ -2322,7 +2310,7 @@ html, body {
 }
 
 .lottery-box.opened {
-  animation: boxOpen 0.45s ease forwards;
+  animation: boxOpen 0.4s ease forwards;
 }
 
 @keyframes lotteryShake {
@@ -2332,38 +2320,43 @@ html, body {
 
 @keyframes boxOpen {
   0%   { transform: scale(1)    rotate(0deg); }
-  35%  { transform: scale(1.2)  rotate(-7deg); }
-  65%  { transform: scale(1.1)  rotate(4deg); }
+  35%  { transform: scale(1.15) rotate(-6deg); }
+  65%  { transform: scale(1.08) rotate(3deg); }
   100% { transform: scale(1)    rotate(0deg); }
 }
 
 .lottery-shake-text {
-  font-size: 36px;
+  font-size: 34px;
   font-weight: bold;
   color: var(--color-navy);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
 }
 
-/* チケット：箱から飛び出すラッパー */
+/* ----------------------------------------
+   チケット：通常フロー内にポップイン表示
+   ---------------------------------------- */
+
+/* ラッパー：初期状態は非表示・縮小 */
 .lottery-ticket-wrap {
-  position: absolute;
-  left: 50%;
-  bottom: 60px;          /* 箱の上端あたりから飛び出す */
-  transform: translateX(-50%);
-  perspective: 900px;
   opacity: 0;
+  transform: scale(0.3) translateY(30px);
   pointer-events: none;
-  z-index: 2;
+  /* perspective はアニメーション対象の要素に置かない → 内側ラッパーへ */
 }
 
 .lottery-ticket-wrap.rising {
-  animation: ticketRise 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation: ticketPopIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
-@keyframes ticketRise {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(0); }
-  18%  { opacity: 1; }
-  100% { opacity: 1; transform: translateX(-50%) translateY(-175px); }
+@keyframes ticketPopIn {
+  0%   { opacity: 0; transform: scale(0.3) translateY(30px); }
+  60%  { opacity: 1; transform: scale(1)   translateY(-4px); }
+  100% { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+/* perspective 専用の静的ラッパー（Safari 互換） */
+.lottery-ticket-perspective {
+  perspective: 900px;
 }
 
 /* チケット本体（カードフリップ） */
@@ -2372,6 +2365,7 @@ html, body {
   height: 116px;
   position: relative;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2379,7 +2373,7 @@ html, body {
   transform: rotateY(180deg);
 }
 
-/* チケット 表面・裏面 共通 */
+/* チケット表面・裏面 共通 */
 .lottery-ticket-front,
 .lottery-ticket-back {
   position: absolute;
@@ -2401,7 +2395,7 @@ html, body {
   font-size: 52px;
 }
 
-/* 裏面：結果（デフォルト：今月の歌） */
+/* 裏面：デフォルト（今月の歌） */
 .lottery-ticket-back {
   background: linear-gradient(135deg, #e8f5e9, #a5d6a7);
   border: 3px solid #43a047;
