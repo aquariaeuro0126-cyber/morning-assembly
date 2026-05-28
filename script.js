@@ -1730,6 +1730,38 @@ function initSong() {
   const STORAGE_KEY_WIN         = 'songWinCount';
   const LOTTERY_TOTAL           = 10;
 
+  // ----------------------------------------
+  // 各月のデフォルト曲データ（未登録月の初期値）
+  // ※著作権あり曲は教室内教育利用目的（著作権法第35条）
+  // ※管理画面から上書き可能
+  // ----------------------------------------
+  const DEFAULT_MONTHLY_SONGS = {
+    "1":  { title: "世界がひとつになるまで", url: "", hasAudio: false, lyrics: "" },
+    "2":  { title: "ビリーブ",               url: "", hasAudio: false, lyrics: "" },
+    "3":  { title: "ありがとう６年生",        url: "", hasAudio: false, lyrics: "" },
+    "4":  { title: "にじ",                   url: "", hasAudio: false, lyrics: "" },
+    "5":  { title: "にじ",                   url: "", hasAudio: false, lyrics: "" },
+    "6":  { title: "君をのせて",             url: "", hasAudio: false, lyrics: "" },
+    "7":  { title: "いつだって！",            url: "", hasAudio: false, lyrics: "" },
+    "8":  { title: "少年時代",               url: "", hasAudio: false, lyrics: "" },
+    "9":  { title: "少年時代",               url: "", hasAudio: false, lyrics: "" },
+    "10": { title: "ゴーゴーゴー",           url: "", hasAudio: false, lyrics: "" },
+    "11": {
+      title: "もみじ", url: "", hasAudio: false,
+      lyrics:
+`あきの ゆうひに てるやま もみじ
+こいも うすいも かずある なかに
+まつを いろどる かえでや つたは
+やまの ふもとの すそもよう
+
+たにの ながれに ちりうく もみじ
+なみに ゆられて はなれて よって
+あかや きいろの いろ さまざまに
+みずの うえにも おる にしき`
+    },
+    "12": { title: "大切なもの",             url: "", hasAudio: false, lyrics: "" }
+  };
+
   // 旧データ（songMonthly）→ songMonthlyAll へのマイグレーション
   (function migrateOldData() {
     const oldRaw = localStorage.getItem(STORAGE_KEY_MONTHLY_OLD);
@@ -1743,6 +1775,25 @@ function initSong() {
         localStorage.setItem(STORAGE_KEY_MONTHLY_ALL, JSON.stringify(migrated));
       } catch (_) { /* 無視 */ }
     }
+  })();
+
+  // デフォルト曲データを適用（未登録の月のみ補完）
+  (function applyDefaultSongs() {
+    try {
+      const all = JSON.parse(localStorage.getItem(STORAGE_KEY_MONTHLY_ALL) || '{}');
+      let changed = false;
+      Object.entries(DEFAULT_MONTHLY_SONGS).forEach(([key, song]) => {
+        const existing = all[key];
+        const isEmpty = !existing || (!existing.title && !existing.url && !existing.hasAudio);
+        if (isEmpty) {
+          all[key] = song;
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem(STORAGE_KEY_MONTHLY_ALL, JSON.stringify(all));
+      }
+    } catch (_) { /* 無視 */ }
   })();
 
   // --- DOM 取得 ---
