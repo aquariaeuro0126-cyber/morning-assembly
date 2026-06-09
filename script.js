@@ -198,6 +198,7 @@ function startEndCountdown() {
 
 function returnToStart() {
   clearInterval(countdownTimer);
+  document.dispatchEvent(new CustomEvent('reset-mini-apps'));
   showScreen(screenStart);
 }
 
@@ -353,6 +354,8 @@ let audioContext    = null;
 let analyser        = null;
 let micStream       = null;
 let measureInterval = null;
+let cdInterval      = null;  // 挨拶：マイク前カウントダウン
+let timerInterval   = null;  // 挨拶：測定タイマー
 let maxVolume       = 0;       // 測定中の最大音量（0〜255）
 
 // フェーズ要素（DOM読み込み後に安全に取得）
@@ -387,6 +390,18 @@ function initVoiceElements() {
       }
     });
   }
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    stopMic();
+    if (suwarimashooTimer) { clearInterval(suwarimashooTimer); suwarimashooTimer = null; }
+    maxVolume = 0;
+    if (volumeFill)        volumeFill.style.width = '0%';
+    if (suwarimashooWrap)  suwarimashooWrap.classList.add('hidden');
+    if (suwarimashooText)  { suwarimashooText.classList.add('hidden'); suwarimashooText.style.animation = ''; }
+    if (suwarimashooCount) suwarimashooCount.textContent = '';
+    showVoicePhase(phaseReady);
+  });
 
   if (btnVoiceRetry) {
     btnVoiceRetry.addEventListener('click', () => {
@@ -427,10 +442,10 @@ async function startMicAndCountdown() {
   let count = COUNTDOWN_SEC;
   countdownNum.textContent = count;
 
-  const cdInterval = setInterval(() => {
+  cdInterval = setInterval(() => {
     count--;
     if (count <= 0) {
-      clearInterval(cdInterval);
+      clearInterval(cdInterval); cdInterval = null;
       startMeasuring();
     } else {
       countdownNum.textContent = count;
@@ -463,12 +478,12 @@ function startMeasuring() {
 
   // 1秒ごとにタイマー更新
   let timerCount = MEASURE_SEC;
-  const timerInterval = setInterval(() => {
+  timerInterval = setInterval(() => {
     timerCount--;
     measureTimer.textContent = timerCount;
     if (timerCount <= 0) {
-      clearInterval(timerInterval);
-      clearInterval(measureInterval);
+      clearInterval(timerInterval); timerInterval = null;
+      clearInterval(measureInterval); measureInterval = null;
       stopMic();
       showResult();
     }
@@ -536,7 +551,9 @@ function showResult() {
 
 // マイク停止・リソース解放
 function stopMic() {
-  clearInterval(measureInterval);
+  clearInterval(measureInterval); measureInterval = null;
+  clearInterval(cdInterval);      cdInterval      = null;
+  clearInterval(timerInterval);   timerInterval   = null;
   if (micStream) {
     micStream.getTracks().forEach(t => t.stop());
     micStream = null;
@@ -645,6 +662,16 @@ function initReikoElements() {
     clearInterval(reikoTimer);
     ringProgress.style.strokeDashoffset = '0';
     // 日直選択リセット
+    nicchokuList.querySelectorAll('.btn-nicchoku').forEach(b => b.classList.remove('selected'));
+    nicchokuSelected.classList.add('hidden');
+    nicchokuPlaceholder.classList.remove('hidden');
+    showReikoPhase(reikoPhaseReady);
+  });
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    clearInterval(reikoTimer); reikoTimer = null;
+    ringProgress.style.strokeDashoffset = '0';
     nicchokuList.querySelectorAll('.btn-nicchoku').forEach(b => b.classList.remove('selected'));
     nicchokuSelected.classList.add('hidden');
     nicchokuPlaceholder.classList.remove('hidden');
@@ -922,6 +949,16 @@ function initDateWeather() {
     if (oshiiEl) oshiiEl.classList.add('hidden');
     showDwPhase(phaseDate);
   });
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    monthIdx   = Math.floor(Math.random() * MONTHS.length);
+    dayIdx     = Math.floor(Math.random() * DAYS.length);
+    weekdayIdx = Math.floor(Math.random() * WEEKDAY_LIST.length);
+    updateDisplay();
+    if (oshiiEl) oshiiEl.classList.add('hidden');
+    showDwPhase(phaseDate);
+  });
 }
 
 // ----------------------------------------
@@ -1102,6 +1139,13 @@ function initAttendance() {
 
   // --- 名簿変更を受け取り人数表示を更新 ---
   document.addEventListener('roster-updated', refreshReadyScreen);
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    shuffledNames = []; callIndex = 0; absentNames = []; teacherNames = []; teacherIndex = 0;
+    refreshReadyScreen();
+    showAttPhase(phaseReady);
+  });
 
   // --- 初回表示 ---
   refreshReadyScreen();
@@ -1486,6 +1530,11 @@ function initKyushoku() {
 
   // 管理画面を閉じたときに Ready フェーズの表示を更新
   document.addEventListener('roster-updated', refreshReadyPhase);
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    showKyuPhase('kyu-phase-ready');
+  });
 
   refreshReadyPhase();
 }
@@ -2065,6 +2114,19 @@ function initSong() {
   // 管理画面変更を反映
   document.addEventListener('song-updated', refreshReady);
 
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+      ytPlayer.stopVideo(); ytPlayer.destroy(); ytPlayer = null;
+    }
+    const playerEl = document.getElementById('song-youtube-player');
+    if (playerEl) playerEl.innerHTML = '';
+    const audioEl = document.getElementById('song-audio-player');
+    if (audioEl) { audioEl.pause(); audioEl.src = ''; audioEl.classList.add('hidden'); }
+    refreshReady();
+    showSongPhase(phaseReady);
+  });
+
   // 初回表示
   refreshReady();
 }
@@ -2399,6 +2461,9 @@ function initNichokuTalk() {
     });
   }
 
+  // ルーレットRAF（スタート画面戻り時のキャンセル用）
+  let raf = null;
+
   // --- ルーレット実行 ---
   btnSpin.addEventListener('click', () => {
     const topics = loadTopics();
@@ -2441,7 +2506,7 @@ function initNichokuTalk() {
     const accelFrames  = 30;  // 加速フレーム数
     const totalDist    = finalY;
     let frame = 0;
-    let raf;
+    // raf は initNichokuTalk スコープで宣言済み
 
     function animate() {
       // 加速フェーズ
@@ -2497,6 +2562,13 @@ function initNichokuTalk() {
 
   // 管理画面変更を反映
   document.addEventListener('nichoku-updated', refreshReady);
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    refreshReady();
+    showNichokuPhase(phaseReady);
+  });
 
   // 初回表示
   refreshReady();
@@ -2782,6 +2854,14 @@ function initSenseiTalk() {
   btnRetry.addEventListener('click', () => {
     stopSenseiTimer();
     if (resultTime) resultTime.textContent = '';
+    showSenseiPhase(phaseReady);
+  });
+
+  // スタート画面に戻ったときのリセット
+  document.addEventListener('reset-mini-apps', () => {
+    stopSenseiTimer();
+    senseiElapsedSec = 0;
+    resetInput();
     showSenseiPhase(phaseReady);
   });
 }
