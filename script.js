@@ -863,6 +863,8 @@ function initDateWeather() {
   const oshiiEl = document.getElementById('dw-oshii');
 
   btnConfirm.addEventListener('click', async () => {
+    if (btnConfirm.disabled) return; // 二重タップ防止
+
     selectedMonth   = MONTHS[monthIdx];
     selectedDay     = DAYS[dayIdx];
     selectedWeekday = WEEKDAY_LIST[weekdayIdx];
@@ -890,7 +892,18 @@ function initDateWeather() {
 
     // 正解 → 天気取得してフェーズ②へ
     if (oshiiEl) oshiiEl.classList.add('hidden');
-    todayWeather = await fetchTodayWeather();
+
+    // 通信中はボタンを無効化して視覚的フィードバックを表示
+    const originalText = btnConfirm.textContent;
+    btnConfirm.disabled = true;
+    btnConfirm.textContent = '🌤 よみこみ中…';
+
+    try {
+      todayWeather = await fetchTodayWeather();
+    } finally {
+      btnConfirm.disabled = false;
+      btnConfirm.textContent = originalText;
+    }
 
     // クイズボタンをリセット
     document.querySelectorAll('.weather-quiz-btn').forEach(b => {

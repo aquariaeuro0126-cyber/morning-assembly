@@ -1277,6 +1277,14 @@ html, body {
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: transform 0.15s, box-shadow 0.15s;
+  touch-action: manipulation; /* iOS 300ms タップ遅延を解消 */
+}
+
+.btn-dw-confirm:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-dw-confirm:hover {
