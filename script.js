@@ -1344,6 +1344,18 @@ function initAdminRoster() {
 // ----------------------------------------
 // ⑤ 給食ミニアプリ
 // ----------------------------------------
+
+// カテゴリーごとの絵文字候補（先頭が既定アイコン）
+const KYU_EMOJI_OPTIONS = {
+  '主食':   ['🍚', '🍞', '🍜', '🍙', '🍝', '🍛', '🥐', '🥖'],
+  'おかず': ['🍖', '🍗', '🍤', '🐟', '🍳', '🥩', '🍢', '🥟', '🌭'],
+  'スープ': ['🍲', '🍵', '🥣', '🫕'],
+  '野菜':   ['🥗', '🥦', '🥕', '🍅', '🌽', '🥬', '🥒', '🍆'],
+  'デザート': ['🍮', '🍎', '🍊', '🍇', '🍉', '🍌', '🍓', '🍨', '🍰', '🍡', '🍧'],
+  '飲み物': ['🥛', '🧃', '🍵', '☕', '🧋', '🥤'],
+  'その他': ['🍴', '🍱', '🧀', '🍘', '🍪', '🍙'],
+};
+
 function initKyushoku() {
   const STORAGE_KEY = 'kyushokuMenus';
   const DAY_LABELS  = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
@@ -1390,14 +1402,20 @@ function initKyushoku() {
     return Object.values(menu.categories).filter(v => v && v.trim());
   }
 
+  // カテゴリーの絵文字を返す（曜日ごとの上書き → カテゴリー既定の順で解決）
+  function iconForCategory(menu, cat) {
+    const override = menu.categoryIcons && menu.categoryIcons[cat];
+    return override || CATEGORY_ICONS[cat] || '🍴';
+  }
+
   // categories からカテゴリー付きの品目を取得（空欄除外・CATEGORIES順）
   function getItemsWithCategory(menu) {
     if (!menu.categories) {
-      return (menu.items || []).map(v => ({ cat: null, val: v }));
+      return (menu.items || []).map(v => ({ cat: null, val: v, icon: '🍴' }));
     }
     return CATEGORIES
       .filter(cat => menu.categories[cat] && menu.categories[cat].trim())
-      .map(cat => ({ cat, val: menu.categories[cat].trim() }));
+      .map(cat => ({ cat, val: menu.categories[cat].trim(), icon: iconForCategory(menu, cat) }));
   }
 
   // 今日の曜日に対応する献立を返す（月〜金、0ベース）
@@ -1480,7 +1498,7 @@ function initKyushoku() {
           if (!val || !val.trim()) return;
           const chip = document.createElement('div');
           chip.className = 'kyu-preview-item';
-          chip.innerHTML = `<span class="kyu-preview-icon">${CATEGORY_ICONS[cat] || '🍴'}</span>${val}`;
+          chip.innerHTML = `<span class="kyu-preview-icon">${iconForCategory(today, cat)}</span>${val}`;
           menuPreview.appendChild(chip);
         });
       }
@@ -1554,8 +1572,8 @@ function initKyushoku() {
       div.style.animationDelay = (i * 0.08) + 's';
       const iconSpan = document.createElement('span');
       iconSpan.className = 'kyu-menu-item-icon';
-      // カテゴリーに対応した絵文字を表示（主食→🍚、野菜→🥗 など）
-      iconSpan.textContent = (p.cat && CATEGORY_ICONS[p.cat]) || '🍴';
+      // 登録時に選んだ絵文字を表示（未設定はカテゴリー既定）
+      iconSpan.textContent = p.icon || (p.cat && CATEGORY_ICONS[p.cat]) || '🍴';
       const nameSpan = document.createElement('span');
       nameSpan.textContent = p.val;
       div.appendChild(iconSpan);
@@ -1626,6 +1644,12 @@ function initAdminKyushoku() {
     return Object.values(menu.categories).filter(v => v && v.trim());
   }
 
+  // カテゴリーの絵文字を返す（曜日ごとの上書き → カテゴリー既定の順で解決）
+  function iconForCategory(menu, cat) {
+    const override = menu.categoryIcons && menu.categoryIcons[cat];
+    return override || CATEGORY_ICONS[cat] || '🍴';
+  }
+
   const daysContainer = document.getElementById('admin-menu-days');
   const editArea      = document.getElementById('admin-menu-edit');
   const editTitle     = document.getElementById('admin-menu-edit-title');
@@ -1657,10 +1681,12 @@ function initAdminKyushoku() {
         empty.textContent = '未登録';
         content.appendChild(empty);
       } else {
-        items.forEach(item => {
+        CATEGORIES.forEach(cat => {
+          const val = menu.categories && menu.categories[cat];
+          if (!val || !val.trim()) return;
           const chip = document.createElement('span');
           chip.className = 'admin-menu-chip';
-          chip.textContent = item;
+          chip.textContent = `${iconForCategory(menu, cat)} ${val.trim()}`;
           content.appendChild(chip);
         });
       }
@@ -1688,11 +1714,17 @@ function initAdminKyushoku() {
     itemsList.innerHTML = '';
     CATEGORIES.forEach(cat => {
       const row = document.createElement('div');
-      row.className = 'admin-menu-item-row admin-menu-category-row';
+      row.className = 'admin-menu-category-row';
+      row.dataset.category = cat;
+      row.dataset.icon = iconForCategory(menu, cat);
+
+      // 上段：ラベル + テキスト入力
+      const top = document.createElement('div');
+      top.className = 'admin-menu-cat-top';
 
       const lbl = document.createElement('label');
       lbl.className = 'admin-menu-category-label';
-      lbl.textContent = `${CATEGORY_ICONS[cat] || '🍴'} ${cat}`;
+      lbl.textContent = cat;
 
       const input = document.createElement('input');
       input.type = 'text';
@@ -1702,8 +1734,28 @@ function initAdminKyushoku() {
       input.maxLength = 30;
       input.value = (menu.categories && menu.categories[cat]) || '';
 
-      row.appendChild(lbl);
-      row.appendChild(input);
+      top.appendChild(lbl);
+      top.appendChild(input);
+
+      // 下段：絵文字パレット（タップで選択）
+      const palette = document.createElement('div');
+      palette.className = 'admin-menu-emoji-palette';
+      const options = KYU_EMOJI_OPTIONS[cat] || [CATEGORY_ICONS[cat] || '🍴'];
+      options.forEach(emo => {
+        const eb = document.createElement('button');
+        eb.type = 'button';
+        eb.className = 'kyu-emoji-opt' + (emo === row.dataset.icon ? ' selected' : '');
+        eb.textContent = emo;
+        eb.addEventListener('click', () => {
+          palette.querySelectorAll('.kyu-emoji-opt').forEach(b => b.classList.remove('selected'));
+          eb.classList.add('selected');
+          row.dataset.icon = emo;
+        });
+        palette.appendChild(eb);
+      });
+
+      row.appendChild(top);
+      row.appendChild(palette);
       itemsList.appendChild(row);
     });
 
@@ -1719,13 +1771,20 @@ function initAdminKyushoku() {
   btnSave.addEventListener('click', () => {
     if (editingIndex < 0) return;
 
-    const categories = {};
-    itemsList.querySelectorAll('.admin-menu-item-input').forEach(inp => {
-      categories[inp.dataset.category] = inp.value.trim();
+    const categories    = {};
+    const categoryIcons = {};
+    itemsList.querySelectorAll('.admin-menu-category-row').forEach(row => {
+      const cat   = row.dataset.category;
+      const input = row.querySelector('.admin-menu-item-input');
+      const val   = input ? input.value.trim() : '';
+      categories[cat] = val;
+      // 品目が入力されているカテゴリーだけ絵文字を保存
+      if (val) categoryIcons[cat] = row.dataset.icon || CATEGORY_ICONS[cat] || '🍴';
     });
 
     const menus = loadMenus();
-    menus[editingIndex].categories = categories;
+    menus[editingIndex].categories    = categories;
+    menus[editingIndex].categoryIcons = categoryIcons;
     saveMenus(menus);
 
     editArea.classList.add('hidden');
