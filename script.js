@@ -105,6 +105,9 @@ function renderStep(index) {
 
   // プログレスドット更新
   renderDots(index);
+
+  // ステップ移動を各ミニアプリへ通知（内部状態のリセット用）
+  document.dispatchEvent(new CustomEvent('step-changed', { detail: { index } }));
 }
 
 // ----------------------------------------
@@ -1387,6 +1390,16 @@ function initKyushoku() {
     return Object.values(menu.categories).filter(v => v && v.trim());
   }
 
+  // categories からカテゴリー付きの品目を取得（空欄除外・CATEGORIES順）
+  function getItemsWithCategory(menu) {
+    if (!menu.categories) {
+      return (menu.items || []).map(v => ({ cat: null, val: v }));
+    }
+    return CATEGORIES
+      .filter(cat => menu.categories[cat] && menu.categories[cat].trim())
+      .map(cat => ({ cat, val: menu.categories[cat].trim() }));
+  }
+
   // 今日の曜日に対応する献立を返す（月〜金、0ベース）
   function getTodayMenu(menus) {
     const day = new Date().getDay(); // 0=日, 1=月, ... 6=土
@@ -1427,6 +1440,22 @@ function initKyushoku() {
     document.getElementById(id).classList.remove('hidden');
   }
 
+  // クイズ・献立一覧の表示内容をクリア（前回の正誤表示が残らないように）
+  function resetKyuQuiz() {
+    quizGrid.innerHTML = '';
+    quizResult.classList.add('hidden');
+    nextButtons.classList.add('hidden');
+    menuBox.innerHTML = '';
+    delete btnNext.dataset.items;
+  }
+
+  // クイズをクリアして ready 画面へ（プレビューも最新化）
+  function resetKyuToReady() {
+    resetKyuQuiz();
+    refreshReadyPhase();
+    showKyuPhase('kyu-phase-ready');
+  }
+
   function refreshReadyPhase() {
     const menus   = loadMenus();
     const today   = getTodayMenu(menus);
@@ -1462,7 +1491,8 @@ function initKyushoku() {
     const menus = loadMenus();
     const today = getTodayMenu(menus);
     if (!today) return;
-    const items = getItems(today);
+    const pairs = getItemsWithCategory(today);
+    const items = pairs.map(p => p.val);
     if (items.length === 0) return;
 
     // 正解：今日の献立からランダムに1品
@@ -1507,27 +1537,27 @@ function initKyushoku() {
       quizGrid.appendChild(btn);
     });
 
-    // 献立一覧フェーズ用に保存
-    btnNext.dataset.items = JSON.stringify(items);
+    // 献立一覧フェーズ用にカテゴリー付きで保存
+    btnNext.dataset.items = JSON.stringify(pairs);
 
     showKyuPhase('kyu-phase-quiz');
   });
 
   btnNext.addEventListener('click', () => {
-    let items = [];
-    try { items = JSON.parse(btnNext.dataset.items); } catch { items = []; }
+    let pairs = [];
+    try { pairs = JSON.parse(btnNext.dataset.items); } catch { pairs = []; }
 
-    const icons = ['🍚', '🍜', '🥗', '🍞', '🥛', '🍮', '🫕', '🥘'];
     menuBox.innerHTML = '';
-    items.forEach((item, i) => {
+    pairs.forEach((p, i) => {
       const div = document.createElement('div');
       div.className = 'kyu-menu-item';
       div.style.animationDelay = (i * 0.08) + 's';
       const iconSpan = document.createElement('span');
       iconSpan.className = 'kyu-menu-item-icon';
-      iconSpan.textContent = icons[i % icons.length];
+      // カテゴリーに対応した絵文字を表示（主食→🍚、野菜→🥗 など）
+      iconSpan.textContent = (p.cat && CATEGORY_ICONS[p.cat]) || '🍴';
       const nameSpan = document.createElement('span');
-      nameSpan.textContent = item;
+      nameSpan.textContent = p.val;
       div.appendChild(iconSpan);
       div.appendChild(nameSpan);
       menuBox.appendChild(div);
@@ -1537,16 +1567,20 @@ function initKyushoku() {
   });
 
   btnRetry.addEventListener('click', () => {
-    refreshReadyPhase();
-    showKyuPhase('kyu-phase-ready');
+    resetKyuToReady();
   });
 
   // 管理画面を閉じたときに Ready フェーズの表示を更新
   document.addEventListener('roster-updated', refreshReadyPhase);
 
-  // スタート画面に戻ったときのリセット
+  // スタート画面に戻ったときのリセット（前日の情報・正誤表示をクリア）
   document.addEventListener('reset-mini-apps', () => {
-    showKyuPhase('kyu-phase-ready');
+    resetKyuToReady();
+  });
+
+  // ステップ移動のたびにクイズ状態をリセット（タブ移動で正解が残らないように）
+  document.addEventListener('step-changed', () => {
+    resetKyuToReady();
   });
 
   refreshReadyPhase();
