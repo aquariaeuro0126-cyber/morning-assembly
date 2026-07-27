@@ -3333,6 +3333,126 @@ function initSenseiTalk() {
 }
 
 // ----------------------------------------
+// 管理画面 — データのバックアップ（書き出し・復元）
+// ----------------------------------------
+function initAdminBackup() {
+  // 天気キャッシュは毎日取り直すため対象外
+  const EXCLUDE_KEYS = ['weather_today', 'weather_date'];
+  const FILE_TAG     = 'morning-assembly';
+
+  const btnExport = document.getElementById('btn-admin-backup-export');
+  const fileInput = document.getElementById('admin-backup-file');
+  const msgEl     = document.getElementById('admin-backup-msg');
+
+  if (!btnExport || !fileInput) return;
+
+  function showMsg(text, isError) {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.classList.remove('hidden');
+    msgEl.classList.toggle('is-error', !!isError);
+  }
+
+  // --- 書き出し ---
+  btnExport.addEventListener('click', () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || EXCLUDE_KEYS.includes(key)) continue;
+      data[key] = localStorage.getItem(key);
+    }
+
+    const count = Object.keys(data).length;
+    if (count === 0) {
+      showMsg('保存できるデータがまだありません。', true);
+      return;
+    }
+
+    const payload = {
+      app: FILE_TAG,
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data,
+    };
+
+    try {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `朝の会アプリ_バックアップ_${kyuDateKey(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showMsg(`✅ ${count}項目を書き出しました。ファイルアプリなどに保存してください。`, false);
+    } catch (e) {
+      showMsg('書き出しに失敗しました。', true);
+    }
+  });
+
+  // --- 復元 ---
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      let payload;
+      try {
+        payload = JSON.parse(reader.result);
+      } catch {
+        showMsg('ファイルを読み取れませんでした。書き出したJSONファイルを選んでください。', true);
+        fileInput.value = '';
+        return;
+      }
+
+      if (!payload || payload.app !== FILE_TAG || !payload.data || typeof payload.data !== 'object') {
+        showMsg('このアプリのバックアップファイルではないようです。', true);
+        fileInput.value = '';
+        return;
+      }
+
+      const keys = Object.keys(payload.data);
+      if (keys.length === 0) {
+        showMsg('ファイルにデータが入っていませんでした。', true);
+        fileInput.value = '';
+        return;
+      }
+
+      let when = '不明';
+      try { when = new Date(payload.exportedAt).toLocaleString('ja-JP'); } catch (_) {}
+
+      const ok = confirm(
+        'バックアップから復元します。\n\n' +
+        `作成日時：${when}\n` +
+        `項目数：${keys.length}\n\n` +
+        'ファイルに入っている項目は、今の内容を上書きします。よろしいですか？'
+      );
+      if (!ok) { fileInput.value = ''; return; }
+
+      let restored = 0;
+      keys.forEach(k => {
+        const v = payload.data[k];
+        if (typeof v === 'string') { localStorage.setItem(k, v); restored++; }
+      });
+
+      fileInput.value = '';
+      alert(`${restored}項目を復元しました。画面を読み込み直します。`);
+      location.reload();
+    };
+
+    reader.onerror = () => {
+      showMsg('ファイルの読み込みに失敗しました。', true);
+      fileInput.value = '';
+    };
+
+    reader.readAsText(file);
+  });
+}
+
+// ----------------------------------------
 // 初期化
 // ----------------------------------------
 // 起動時はスタート画面 → 💡ボタンを表示
@@ -3351,6 +3471,7 @@ initAdminSong();
 initNichokuTalk();
 initAdminNichokuTalk();
 initSenseiTalk();
+initAdminBackup();
 
 // ----------------------------------------
 // ひらがな / 漢字モード切り替え

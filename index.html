@@ -1148,6 +1148,36 @@
           </div>
         </section>
 
+        <!-- データのバックアップ -->
+        <section class="admin-section">
+          <h2 class="admin-section-title">💾 データのバックアップ</h2>
+          <p class="admin-section-desc">
+            登録した献立・名簿・歌の設定などをファイルに保存できます。
+            このアプリのデータはiPadのブラウザ内に保存されているため、
+            Safariの履歴を消したり端末を変えたりすると消えてしまいます。年度末や学期末に書き出しておくと安心です。
+          </p>
+
+          <div class="admin-backup">
+            <div class="admin-backup-row">
+              <button type="button" id="btn-admin-backup-export" class="btn-admin-add">⬇️ バックアップを書き出す</button>
+              <span class="admin-backup-note">今のデータをファイルに保存します</span>
+            </div>
+
+            <div class="admin-backup-row">
+              <label for="admin-backup-file" class="admin-backup-filelabel">⬆️ バックアップから復元する</label>
+              <input type="file" id="admin-backup-file" class="admin-backup-file" accept="application/json,.json">
+              <span class="admin-backup-note">保存したファイルを選ぶと元に戻せます</span>
+            </div>
+
+            <p class="admin-backup-warn">
+              ⚠️ 書き出したファイルには<strong>児童・先生の名前</strong>が含まれます。保管と受け渡しにご注意ください（GitHubにアップロードしないでください）。<br>
+              ※ 歌の音声ファイルはサイズが大きいため、バックアップには含まれません。
+            </p>
+
+            <p class="admin-backup-msg hidden" id="admin-backup-msg"></p>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
