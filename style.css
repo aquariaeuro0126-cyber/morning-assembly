@@ -2072,6 +2072,139 @@ html, body {
   margin: -8px 0 16px;
 }
 
+/* ============================================================
+   給食：月カレンダー（管理画面）
+   ============================================================ */
+.admin-cal {
+  width: 100%;
+  background: var(--color-bg-soft);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.admin-cal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-cal-title {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.admin-cal-nav,
+.admin-cal-today {
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-navy);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  touch-action: manipulation;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.admin-cal-nav {
+  font-size: 16px;
+  padding: 8px 14px;
+}
+
+.admin-cal-today {
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.admin-cal-nav:active,
+.admin-cal-today:active {
+  transform: scale(0.94);
+  background: #eef3f7;
+}
+
+.admin-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.admin-cal-weekdays span {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-light);
+  padding: 2px 0;
+}
+
+.admin-cal-weekdays .is-sun { color: #e53935; }
+.admin-cal-weekdays .is-sat { color: #1e88e5; }
+
+.admin-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.admin-cal-cell {
+  min-height: 52px;
+  border-radius: 10px;
+}
+
+.admin-cal-blank {
+  background: transparent;
+}
+
+.admin-cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: #fff;
+  border: 2px solid transparent;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 2px;
+  touch-action: manipulation;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.admin-cal-day:active {
+  transform: scale(0.94);
+}
+
+.admin-cal-num {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1;
+}
+
+.admin-cal-day.is-sun .admin-cal-num { color: #e53935; }
+.admin-cal-day.is-sat .admin-cal-num { color: #1e88e5; }
+
+/* 献立が登録済みの日 */
+.admin-cal-day.has-menu {
+  background: #e8f5e9;
+  border-color: #43a047;
+}
+
+/* 今日 */
+.admin-cal-day.is-today {
+  box-shadow: 0 0 0 2px var(--color-sunrise) inset;
+}
+
+.admin-cal-marks {
+  font-size: 12px;
+  line-height: 1;
+}
+
 .admin-menu-days {
   display: flex;
   flex-direction: column;

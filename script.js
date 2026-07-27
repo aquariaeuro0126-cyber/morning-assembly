@@ -1356,11 +1356,103 @@ const KYU_EMOJI_OPTIONS = {
   'その他': ['🍴', '🍱', '🧀', '🍘', '🍪', '🍙'],
 };
 
+// ==== 給食データ層（本体・管理画面で共有） ====
+const KYU_CATEGORIES     = ['主食', 'おかず', 'スープ', '野菜', 'デザート', '飲み物', 'その他'];
+const KYU_CATEGORY_ICONS = { '主食': '🍚', 'おかず': '🍖', 'スープ': '🍲', '野菜': '🥗', 'デザート': '🍮', '飲み物': '🥛', 'その他': '🍴' };
+const KYU_KEY_BY_DATE    = 'kyushokuMenusByDate'; // 新：日付キー
+const KYU_KEY_LEGACY     = 'kyushokuMenus';       // 旧：曜日5件（削除せず保持）
+const KYU_KEY_MIGRATED   = 'kyushokuMigratedToDate';
+
+function kyuEmptyCategories() {
+  return Object.fromEntries(KYU_CATEGORIES.map(c => [c, '']));
+}
+
+// Date → "YYYY-MM-DD"（ローカル時刻ベース。toISOString はUTCずれするため使わない）
+function kyuDateKey(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function kyuLoadByDate() {
+  try { return JSON.parse(localStorage.getItem(KYU_KEY_BY_DATE)) || {}; }
+  catch { return {}; }
+}
+
+function kyuSaveByDate(map) {
+  localStorage.setItem(KYU_KEY_BY_DATE, JSON.stringify(map));
+}
+
+// 指定日の献立を返す（未登録は null）
+function kyuGetMenuByDate(dateKey) {
+  return kyuLoadByDate()[dateKey] || null;
+}
+
+// カテゴリーの絵文字（その日の上書き → カテゴリー既定 の順で解決）
+function kyuIconForCategory(menu, cat) {
+  const override = menu && menu.categoryIcons && menu.categoryIcons[cat];
+  return override || KYU_CATEGORY_ICONS[cat] || '🍴';
+}
+
+// 品目配列（空欄除外）
+function kyuGetItems(menu) {
+  if (!menu || !menu.categories) return [];
+  return KYU_CATEGORIES
+    .map(cat => menu.categories[cat])
+    .filter(v => v && v.trim())
+    .map(v => v.trim());
+}
+
+// カテゴリー・絵文字付きの品目（CATEGORIES順・空欄除外）
+function kyuGetItemsWithCategory(menu) {
+  if (!menu || !menu.categories) return [];
+  return KYU_CATEGORIES
+    .filter(cat => menu.categories[cat] && menu.categories[cat].trim())
+    .map(cat => ({ cat, val: menu.categories[cat].trim(), icon: kyuIconForCategory(menu, cat) }));
+}
+
+// 今週の月曜日を返す（日曜は「翌日の月曜」＝これから始まる週とみなす）
+function kyuThisMonday() {
+  const now  = new Date();
+  const day  = now.getDay();               // 0=日, 1=月 … 6=土
+  const diff = (day === 0) ? 1 : (1 - day);
+  const mon  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  return mon;
+}
+
+// 旧「曜日ごと5件」データを今週の月〜金へコピー（初回のみ・既存日付は上書きしない）
+function kyuMigrateLegacyToThisWeek() {
+  if (localStorage.getItem(KYU_KEY_MIGRATED) === '1') return;
+  try {
+    const legacy = JSON.parse(localStorage.getItem(KYU_KEY_LEGACY) || 'null');
+    if (Array.isArray(legacy)) {
+      const map    = kyuLoadByDate();
+      const monday = kyuThisMonday();
+      legacy.slice(0, 5).forEach((m, i) => {
+        if (!m || !m.categories) return;
+        const hasItem = Object.values(m.categories).some(v => v && v.trim());
+        if (!hasItem) return;
+        const d   = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+        const key = kyuDateKey(d);
+        if (map[key]) return; // 既に日付登録があれば尊重
+        map[key] = {
+          categories:    { ...m.categories },
+          categoryIcons: { ...(m.categoryIcons || {}) },
+        };
+      });
+      kyuSaveByDate(map);
+    }
+  } catch (_) { /* 旧データが壊れていても新規開始できるよう無視 */ }
+  localStorage.setItem(KYU_KEY_MIGRATED, '1');
+}
+
 function initKyushoku() {
-  const STORAGE_KEY = 'kyushokuMenus';
-  const DAY_LABELS  = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
-  const CATEGORIES  = ['主食', 'おかず', 'スープ', '野菜', 'デザート', '飲み物', 'その他'];
-  const CATEGORY_ICONS = { '主食': '🍚', 'おかず': '🍖', 'スープ': '🍲', '野菜': '🥗', 'デザート': '🍮', '飲み物': '🥛', 'その他': '🍴' };
+  // 旧データ（曜日ごと5件）を今週の月〜金へ引き継ぐ（初回のみ）
+  kyuMigrateLegacyToThisWeek();
+
+  const CATEGORIES     = KYU_CATEGORIES;
+  const CATEGORY_ICONS = KYU_CATEGORY_ICONS;
 
   // ダミー候補（クイズの不正解選択肢として使用）
   const DUMMY_ITEMS = [
@@ -1370,60 +1462,14 @@ function initKyushoku() {
     'おにぎり', '焼き魚', '煮物', 'チャーハン', 'オムライス'
   ];
 
-  // --- データ操作 ---
-  function emptyCategories() {
-    return Object.fromEntries(CATEGORIES.map(c => [c, '']));
-  }
+  // --- データ操作（モジュール共通ヘルパーに委譲） ---
+  const getItems             = kyuGetItems;
+  const iconForCategory      = kyuIconForCategory;
+  const getItemsWithCategory = kyuGetItemsWithCategory;
 
-  function loadMenus() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
-      const parsed = JSON.parse(raw);
-      // マイグレーション：旧形式（items配列）→ 新形式（categories）
-      return parsed.map(m => {
-        if (!m.categories) {
-          return { label: m.label, categories: emptyCategories() };
-        }
-        return m;
-      });
-    } catch {
-      return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
-    }
-  }
-
-  function saveMenus(menus) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
-  }
-
-  // categories から品目配列を取得（空欄除外）
-  function getItems(menu) {
-    if (!menu.categories) return menu.items || [];
-    return Object.values(menu.categories).filter(v => v && v.trim());
-  }
-
-  // カテゴリーの絵文字を返す（曜日ごとの上書き → カテゴリー既定の順で解決）
-  function iconForCategory(menu, cat) {
-    const override = menu.categoryIcons && menu.categoryIcons[cat];
-    return override || CATEGORY_ICONS[cat] || '🍴';
-  }
-
-  // categories からカテゴリー付きの品目を取得（空欄除外・CATEGORIES順）
-  function getItemsWithCategory(menu) {
-    if (!menu.categories) {
-      return (menu.items || []).map(v => ({ cat: null, val: v, icon: '🍴' }));
-    }
-    return CATEGORIES
-      .filter(cat => menu.categories[cat] && menu.categories[cat].trim())
-      .map(cat => ({ cat, val: menu.categories[cat].trim(), icon: iconForCategory(menu, cat) }));
-  }
-
-  // 今日の曜日に対応する献立を返す（月〜金、0ベース）
-  function getTodayMenu(menus) {
-    const day = new Date().getDay(); // 0=日, 1=月, ... 6=土
-    const idx = day - 1;
-    if (idx < 0 || idx > 4) return null; // 土日は null
-    return menus[idx];
+  // 今日の日付に対応する献立を返す（未登録は null）
+  function getTodayMenu() {
+    return kyuGetMenuByDate(kyuDateKey(new Date()));
   }
 
   // Fisher-Yates シャッフル
@@ -1475,11 +1521,10 @@ function initKyushoku() {
   }
 
   function refreshReadyPhase() {
-    const menus   = loadMenus();
-    const today   = getTodayMenu(menus);
+    const today   = getTodayMenu();
     const dayName = ['日', '月', '火', '水', '木', '金', '土'];
-    const day     = new Date().getDay();
-    todayLabel.textContent = `📅 今日は${dayName[day]}曜日`;
+    const now     = new Date();
+    todayLabel.textContent = `📅 今日は${now.getMonth() + 1}月${now.getDate()}日（${dayName[now.getDay()]}）`;
 
     const items = today ? getItems(today) : [];
 
@@ -1506,8 +1551,7 @@ function initKyushoku() {
   }
 
   btnStart.addEventListener('click', () => {
-    const menus = loadMenus();
-    const today = getTodayMenu(menus);
+    const today = getTodayMenu();
     if (!today) return;
     const pairs = getItemsWithCategory(today);
     const items = pairs.map(p => p.val);
@@ -1608,107 +1652,88 @@ function initKyushoku() {
 // 管理画面：給食献立管理
 // ----------------------------------------
 function initAdminKyushoku() {
-  const STORAGE_KEY    = 'kyushokuMenus';
-  const DAY_LABELS     = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'];
-  const CATEGORIES     = ['主食', 'おかず', 'スープ', '野菜', 'デザート', '飲み物', 'その他'];
-  const CATEGORY_ICONS = { '主食': '🍚', 'おかず': '🍖', 'スープ': '🍲', '野菜': '🥗', 'デザート': '🍮', '飲み物': '🥛', 'その他': '🍴' };
+  const CATEGORIES     = KYU_CATEGORIES;
+  const CATEGORY_ICONS = KYU_CATEGORY_ICONS;
+  const WEEK_LABELS    = ['日', '月', '火', '水', '木', '金', '土'];
 
-  function emptyCategories() {
-    return Object.fromEntries(CATEGORIES.map(c => [c, '']));
-  }
+  const getItems        = kyuGetItems;
+  const iconForCategory = kyuIconForCategory;
 
-  function loadMenus() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
-      const parsed = JSON.parse(raw);
-      // マイグレーション：旧形式（items配列）→ 新形式（categories）
-      return parsed.map(m => {
-        if (!m.categories) {
-          return { label: m.label, categories: emptyCategories() };
-        }
-        return m;
-      });
-    } catch {
-      return DAY_LABELS.map(label => ({ label, categories: emptyCategories() }));
-    }
-  }
-
-  function saveMenus(menus) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
-  }
-
-  // categories から品目配列を取得
-  function getItems(menu) {
-    if (!menu.categories) return menu.items || [];
-    return Object.values(menu.categories).filter(v => v && v.trim());
-  }
-
-  // カテゴリーの絵文字を返す（曜日ごとの上書き → カテゴリー既定の順で解決）
-  function iconForCategory(menu, cat) {
-    const override = menu.categoryIcons && menu.categoryIcons[cat];
-    return override || CATEGORY_ICONS[cat] || '🍴';
-  }
-
-  const daysContainer = document.getElementById('admin-menu-days');
+  const calTitle      = document.getElementById('admin-cal-title');
+  const calGrid       = document.getElementById('admin-cal-grid');
+  const btnCalPrev    = document.getElementById('btn-admin-cal-prev');
+  const btnCalNext    = document.getElementById('btn-admin-cal-next');
+  const btnCalToday   = document.getElementById('btn-admin-cal-today');
   const editArea      = document.getElementById('admin-menu-edit');
   const editTitle     = document.getElementById('admin-menu-edit-title');
   const itemsList     = document.getElementById('admin-menu-items-list');
   const btnCancel     = document.getElementById('btn-admin-menu-cancel');
   const btnSave       = document.getElementById('btn-admin-menu-save');
 
-  let editingIndex = -1;
+  let editingDateKey = null;              // 編集中の日付（"YYYY-MM-DD"）
+  let calYear  = new Date().getFullYear(); // 表示中の年
+  let calMonth = new Date().getMonth();    // 表示中の月（0ベース）
 
-  function renderDayCards() {
-    const menus = loadMenus();
-    daysContainer.innerHTML = '';
+  // 月カレンダーを描画
+  function renderCalendar() {
+    if (!calGrid) return;
+    const map      = kyuLoadByDate();
+    const todayKey = kyuDateKey(new Date());
 
-    menus.forEach((menu, i) => {
-      const items = getItems(menu);
-      const card  = document.createElement('div');
-      card.className = 'admin-menu-day-card' + (items.length > 0 ? ' has-menu' : '');
+    calTitle.textContent = `${calYear}年${calMonth + 1}月`;
+    calGrid.innerHTML = '';
 
-      const label = document.createElement('div');
-      label.className = 'admin-menu-day-label';
-      label.textContent = menu.label;
+    const first      = new Date(calYear, calMonth, 1);
+    const daysInMon  = new Date(calYear, calMonth + 1, 0).getDate();
+    const leadBlanks = first.getDay(); // 月初までの空きマス
 
-      const content = document.createElement('div');
-      content.className = 'admin-menu-day-content';
+    for (let i = 0; i < leadBlanks; i++) {
+      const blank = document.createElement('div');
+      blank.className = 'admin-cal-cell admin-cal-blank';
+      calGrid.appendChild(blank);
+    }
 
-      if (items.length === 0) {
-        const empty = document.createElement('span');
-        empty.className = 'admin-menu-empty-text';
-        empty.textContent = '未登録';
-        content.appendChild(empty);
-      } else {
-        CATEGORIES.forEach(cat => {
-          const val = menu.categories && menu.categories[cat];
-          if (!val || !val.trim()) return;
-          const chip = document.createElement('span');
-          chip.className = 'admin-menu-chip';
-          chip.textContent = `${iconForCategory(menu, cat)} ${val.trim()}`;
-          content.appendChild(chip);
-        });
+    for (let d = 1; d <= daysInMon; d++) {
+      const date    = new Date(calYear, calMonth, d);
+      const key     = kyuDateKey(date);
+      const dow     = date.getDay();
+      const menu    = map[key];
+      const hasMenu = menu && kyuGetItems(menu).length > 0;
+
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'admin-cal-cell admin-cal-day';
+      if (dow === 0) cell.classList.add('is-sun');
+      if (dow === 6) cell.classList.add('is-sat');
+      if (hasMenu)         cell.classList.add('has-menu');
+      if (key === todayKey) cell.classList.add('is-today');
+      cell.dataset.date = key;
+
+      const num = document.createElement('span');
+      num.className = 'admin-cal-num';
+      num.textContent = d;
+      cell.appendChild(num);
+
+      // 登録済みなら先頭2品の絵文字を表示
+      if (hasMenu) {
+        const marks = document.createElement('span');
+        marks.className = 'admin-cal-marks';
+        marks.textContent = kyuGetItemsWithCategory(menu).slice(0, 2).map(p => p.icon).join('');
+        cell.appendChild(marks);
       }
 
-      const editBtn = document.createElement('button');
-      editBtn.className = 'btn-admin-menu-edit';
-      editBtn.textContent = '編集';
-      editBtn.addEventListener('click', () => openEditArea(i));
-
-      card.appendChild(label);
-      card.appendChild(content);
-      card.appendChild(editBtn);
-      daysContainer.appendChild(card);
-    });
+      cell.addEventListener('click', () => openEditArea(key));
+      calGrid.appendChild(cell);
+    }
   }
 
-  function openEditArea(index) {
-    const menus = loadMenus();
-    const menu  = menus[index];
-    editingIndex = index;
+  function openEditArea(dateKey) {
+    const menu = kyuGetMenuByDate(dateKey) || { categories: kyuEmptyCategories(), categoryIcons: {} };
+    editingDateKey = dateKey;
 
-    editTitle.textContent = `🍱 ${menu.label} の献立を編集`;
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const dow = new Date(y, m - 1, d).getDay();
+    editTitle.textContent = `🍱 ${m}月${d}日（${WEEK_LABELS[dow]}）の献立`;
 
     // カテゴリー別入力欄を生成
     itemsList.innerHTML = '';
@@ -1765,38 +1790,71 @@ function initAdminKyushoku() {
 
   btnCancel.addEventListener('click', () => {
     editArea.classList.add('hidden');
-    editingIndex = -1;
+    editingDateKey = null;
   });
 
   btnSave.addEventListener('click', () => {
-    if (editingIndex < 0) return;
+    if (!editingDateKey) return;
 
     const categories    = {};
     const categoryIcons = {};
+    let hasAny = false;
     itemsList.querySelectorAll('.admin-menu-category-row').forEach(row => {
       const cat   = row.dataset.category;
       const input = row.querySelector('.admin-menu-item-input');
       const val   = input ? input.value.trim() : '';
       categories[cat] = val;
       // 品目が入力されているカテゴリーだけ絵文字を保存
-      if (val) categoryIcons[cat] = row.dataset.icon || CATEGORY_ICONS[cat] || '🍴';
+      if (val) {
+        hasAny = true;
+        categoryIcons[cat] = row.dataset.icon || CATEGORY_ICONS[cat] || '🍴';
+      }
     });
 
-    const menus = loadMenus();
-    menus[editingIndex].categories    = categories;
-    menus[editingIndex].categoryIcons = categoryIcons;
-    saveMenus(menus);
+    const map = kyuLoadByDate();
+    if (hasAny) {
+      map[editingDateKey] = { categories, categoryIcons };
+    } else {
+      // 全欄が空 → その日の登録を取り消す
+      delete map[editingDateKey];
+    }
+    kyuSaveByDate(map);
 
     editArea.classList.add('hidden');
-    editingIndex = -1;
-    renderDayCards();
+    editingDateKey = null;
+    renderCalendar();
     document.dispatchEvent(new CustomEvent('roster-updated'));
   });
 
-  // 管理画面を開くたびにリストを再描画
-  document.addEventListener('admin-opened', renderDayCards);
+  // --- カレンダーの月移動 ---
+  function shiftMonth(delta) {
+    const d = new Date(calYear, calMonth + delta, 1);
+    calYear  = d.getFullYear();
+    calMonth = d.getMonth();
+    editArea.classList.add('hidden');
+    editingDateKey = null;
+    renderCalendar();
+  }
 
-  renderDayCards();
+  if (btnCalPrev)  btnCalPrev.addEventListener('click', () => shiftMonth(-1));
+  if (btnCalNext)  btnCalNext.addEventListener('click', () => shiftMonth(1));
+  if (btnCalToday) btnCalToday.addEventListener('click', () => {
+    const now = new Date();
+    calYear  = now.getFullYear();
+    calMonth = now.getMonth();
+    editArea.classList.add('hidden');
+    editingDateKey = null;
+    renderCalendar();
+  });
+
+  // 管理画面を開くたびに再描画
+  document.addEventListener('admin-opened', () => {
+    editArea.classList.add('hidden');
+    editingDateKey = null;
+    renderCalendar();
+  });
+
+  renderCalendar();
 }
 
 // ----------------------------------------

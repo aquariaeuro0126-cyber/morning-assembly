@@ -937,17 +937,29 @@
         <!-- 給食：献立管理 -->
         <section class="admin-section">
           <h2 class="admin-section-title">🍱 給食 — 献立管理</h2>
-          <p class="admin-section-desc">最大5日分の献立を登録できます。当日の曜日と一致する献立がクイズに使われます。</p>
+          <p class="admin-section-desc">カレンダーの日付をタップして献立を登録します。当日の日付の献立がクイズに使われます。過去の月も ◀ ▶ で見返せます。</p>
 
-          <div class="admin-menu-days" id="admin-menu-days">
-            <!-- 5日分のカード（JS で生成） -->
+          <!-- 月カレンダー -->
+          <div class="admin-cal">
+            <div class="admin-cal-head">
+              <button type="button" id="btn-admin-cal-prev" class="admin-cal-nav">◀</button>
+              <div class="admin-cal-title" id="admin-cal-title">読み込み中…</div>
+              <button type="button" id="btn-admin-cal-next" class="admin-cal-nav">▶</button>
+              <button type="button" id="btn-admin-cal-today" class="admin-cal-today">今月</button>
+            </div>
+            <div class="admin-cal-weekdays">
+              <span class="is-sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="is-sat">土</span>
+            </div>
+            <div class="admin-cal-grid" id="admin-cal-grid">
+              <!-- 日付セル（JS で生成） -->
+            </div>
           </div>
 
           <!-- 献立追加モーダル風インライン編集 -->
           <div class="admin-menu-edit hidden" id="admin-menu-edit">
             <div class="admin-menu-edit-inner">
               <h3 class="admin-menu-edit-title" id="admin-menu-edit-title">献立を編集</h3>
-              <p class="admin-menu-edit-desc">カテゴリーごとに献立を入力してください（空欄は省略されます）</p>
+              <p class="admin-menu-edit-desc">カテゴリーごとに献立を入力してください（すべて空欄で保存すると、その日の登録を取り消します）</p>
               <div id="admin-menu-items-list" class="admin-menu-items-list">
                 <!-- JS で入力欄を生成 -->
               </div>
