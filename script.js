@@ -3333,6 +3333,45 @@ function initSenseiTalk() {
 }
 
 // ----------------------------------------
+// 管理画面 — タブ切り替え
+// ----------------------------------------
+function initAdminTabs() {
+  const tabList = document.getElementById('admin-tab-list');
+  const adminBody = document.querySelector('.admin-body');
+  if (!tabList) return;
+
+  const tabs   = tabList.querySelectorAll('.admin-tab-item[data-panel]');
+  const panels = document.querySelectorAll('.admin-section[data-panel]');
+  if (tabs.length === 0 || panels.length === 0) return;
+
+  // 既定は最初の選択できるタブ（＝④出席）
+  const DEFAULT_PANEL = tabs[0].dataset.panel;
+
+  function showPanel(name) {
+    let matched = false;
+    panels.forEach(p => {
+      const hit = p.dataset.panel === name;
+      p.classList.toggle('hidden', !hit);
+      if (hit) matched = true;
+    });
+    // 対応パネルが無い場合は既定へ戻す（表示が真っ白になるのを防ぐ）
+    if (!matched && name !== DEFAULT_PANEL) { showPanel(DEFAULT_PANEL); return; }
+
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.panel === name));
+    if (adminBody) adminBody.scrollTop = 0;
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => showPanel(tab.dataset.panel));
+  });
+
+  // 管理画面を開くたびに既定のタブへ戻す
+  document.addEventListener('admin-opened', () => showPanel(DEFAULT_PANEL));
+
+  showPanel(DEFAULT_PANEL);
+}
+
+// ----------------------------------------
 // 管理画面 — データのバックアップ（書き出し・復元）
 // ----------------------------------------
 function initAdminBackup() {
@@ -3472,6 +3511,7 @@ initNichokuTalk();
 initAdminNichokuTalk();
 initSenseiTalk();
 initAdminBackup();
+initAdminTabs();
 
 // ----------------------------------------
 // ひらがな / 漢字モード切り替え

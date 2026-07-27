@@ -932,10 +932,48 @@
         <h1>⚙️ 管理画面</h1>
         <button id="btn-admin-close" class="btn-secondary">閉じる</button>
       </div>
-      <div class="admin-body">
+      <div class="admin-main">
+
+        <!-- 左：管理メニュー（児童画面のタブバーと同じ並び） -->
+        <nav class="admin-sidebar">
+          <div class="admin-sidebar-title">管理メニュー</div>
+          <ul class="admin-tab-list" id="admin-tab-list">
+            <li class="admin-tab-item is-disabled" title="このミニアプリに設定項目はありません">
+              <span class="tab-num">①</span><span class="tab-label">号令</span>
+            </li>
+            <li class="admin-tab-item is-disabled" title="このミニアプリに設定項目はありません">
+              <span class="tab-num">②</span><span class="tab-label">挨拶</span>
+            </li>
+            <li class="admin-tab-item is-disabled" title="このミニアプリに設定項目はありません">
+              <span class="tab-num">③</span><span class="tab-label">日付・天気</span>
+            </li>
+            <li class="admin-tab-item" data-panel="attendance">
+              <span class="tab-num">④</span><span class="tab-label">出席</span>
+            </li>
+            <li class="admin-tab-item" data-panel="kyushoku">
+              <span class="tab-num">⑤</span><span class="tab-label">給食</span>
+            </li>
+            <li class="admin-tab-item" data-panel="song">
+              <span class="tab-num">⑥</span><span class="tab-label">歌</span>
+            </li>
+            <li class="admin-tab-item" data-panel="nichoku">
+              <span class="tab-num">⑦</span><span class="tab-label">日直の話</span>
+            </li>
+            <li class="admin-tab-item is-disabled" title="このミニアプリに設定項目はありません">
+              <span class="tab-num">⑧</span><span class="tab-label">先生の話</span>
+            </li>
+            <li class="admin-tab-sep" aria-hidden="true"></li>
+            <li class="admin-tab-item" data-panel="backup">
+              <span class="tab-num">💾</span><span class="tab-label">バックアップ</span>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- 右：選択中の設定パネル -->
+        <div class="admin-body">
 
         <!-- 給食：献立管理 -->
-        <section class="admin-section">
+        <section class="admin-section hidden" data-panel="kyushoku">
           <h2 class="admin-section-title">🍱 給食 — 献立管理</h2>
           <p class="admin-section-desc">カレンダーの日付をタップして献立を登録します。当日の日付の献立がクイズに使われます。過去の月も ◀ ▶ で見返せます。</p>
 
@@ -1002,7 +1040,7 @@
         </section>
 
         <!-- 歌：設定管理 -->
-        <section class="admin-section">
+        <section class="admin-section hidden" data-panel="song">
           <h2 class="admin-section-title">🎵 歌 — 設定管理</h2>
           <p class="admin-section-desc">月ごとの歌・好きな曲リスト・当たり枠数を登録します。</p>
 
@@ -1076,7 +1114,7 @@
         </section>
 
         <!-- 日直の話：トピック管理 -->
-        <section class="admin-section">
+        <section class="admin-section hidden" data-panel="nichoku">
           <h2 class="admin-section-title">🗣️ 日直の話 — トピック管理</h2>
           <p class="admin-section-desc">ルーレットで選ぶトピックを登録します。</p>
 
@@ -1101,7 +1139,7 @@
         </section>
 
         <!-- 出席：名簿管理 -->
-        <section class="admin-section">
+        <section class="admin-section hidden" data-panel="attendance">
           <h2 class="admin-section-title">📋 出席 — 名簿管理</h2>
 
           <!-- 先生名登録 -->
@@ -1149,7 +1187,7 @@
         </section>
 
         <!-- データのバックアップ -->
-        <section class="admin-section">
+        <section class="admin-section hidden" data-panel="backup">
           <h2 class="admin-section-title">💾 データのバックアップ</h2>
           <p class="admin-section-desc">
             登録した献立・名簿・歌の設定などをファイルに保存できます。
@@ -1178,7 +1216,8 @@
           </div>
         </section>
 
-      </div>
+        </div><!-- /.admin-body -->
+      </div><!-- /.admin-main -->
     </div>
   </div>
 
