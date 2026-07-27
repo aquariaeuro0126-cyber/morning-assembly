@@ -1421,6 +1421,153 @@ function kyuThisMonday() {
   return mon;
 }
 
+// ==== 貼り付けテキストの解析 ====
+
+// 品目名 → カテゴリー判定（上から順に照合し、最初に一致したものを採用）
+const KYU_CAT_KEYWORDS = [
+  ['飲み物',   ['牛乳', 'ぎゅうにゅう', 'ミルク', '麦茶', 'むぎちゃ', 'お茶', 'ジュース', '豆乳']],
+  ['スープ',   ['汁', 'しる', 'じる', 'スープ', 'シチュー', 'ポタージュ', 'すまし', 'みそしる', 'けんちん']],
+  ['デザート', ['ゼリー', 'ヨーグルト', 'プリン', 'アイス', 'ケーキ', '果物', 'くだもの', 'みかん', 'りんご',
+                'バナナ', 'ぶどう', 'すいか', 'パイン', 'いちご', 'メロン', 'シャーベット', 'ムース']],
+  ['野菜',     ['サラダ', 'あえ', '和え', 'おひたし', 'ひたし', 'ナムル', '酢の物', 'すのもの',
+                'きんぴら', 'マリネ', 'つけもの', '漬物', 'バンサンスー', 'ばんさんすー',
+                'ソテー', 'こんぶ', 'かいそう', '海藻']],
+  ['主食',     ['ごはん', 'ご飯', 'ライス', 'パン', 'うどん', 'ラーメン', 'そば', 'スパゲッティ', 'スパゲティ',
+                'パスタ', 'めん', '麺', 'ピラフ', 'チャーハン', 'カレー', '丼', 'どんぶり']],
+];
+
+// 品目名から絵文字を細かく推定（該当なしはカテゴリー既定を使う）
+const KYU_ICON_HINTS = [
+  ['🍞', ['パン', 'コッペ', 'トースト']],
+  ['🍜', ['ラーメン', 'うどん', 'そば', 'めん', '麺', 'スパゲ', 'パスタ']],
+  ['🍛', ['カレー']],
+  ['🍎', ['りんご', 'みかん', 'バナナ', 'ぶどう', 'すいか', 'パイン', 'いちご', 'メロン', '果物', 'くだもの']],
+  ['🍨', ['アイス', 'シャーベット']],
+  ['🥛', ['牛乳', 'ぎゅうにゅう', 'ミルク']],
+  ['🧃', ['ジュース']],
+  ['🍵', ['茶']],
+  ['🍲', ['汁', 'しる', 'じる', 'スープ', 'シチュー']],
+  ['🐟', ['さば', 'さけ', 'あじ', 'いわし', 'さんま', 'ぶり', 'たら', '魚']],
+  ['🍗', ['からあげ', 'とり', 'チキン', 'ハンバーグ']],
+];
+
+// 1行から日付を読み取る。取れなければ null
+// baseYear / baseMonth（0ベース）は「日だけ書かれている行」の補完に使う
+function kyuParseDateLine(line, baseYear, baseMonth) {
+  let m, month = null, day = null, rest = null;
+
+  if ((m = line.match(/^\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日?/))) {
+    month = +m[1]; day = +m[2]; rest = line.slice(m[0].length);
+  } else if ((m = line.match(/^\s*(\d{1,2})\s*[\/／]\s*(\d{1,2})/))) {
+    month = +m[1]; day = +m[2]; rest = line.slice(m[0].length);
+  } else if ((m = line.match(/^\s*(\d{1,2})\s*日/))) {
+    day = +m[1]; rest = line.slice(m[0].length);
+  } else if ((m = line.match(/^\s*(\d{1,2})\s*(?=[（(\s　]|$)/))) {
+    day = +m[1]; rest = line.slice(m[0].length);
+  } else {
+    return null;
+  }
+
+  if (day < 1 || day > 31) return null;
+  if (month !== null && (month < 1 || month > 12)) return null;
+
+  // 年月を決定（明示の月があれば優先。年またぎも考慮）
+  let y = baseYear, mo = baseMonth;
+  if (month !== null) {
+    if (baseMonth === 11 && month === 1)      y = baseYear + 1;
+    else if (baseMonth === 0 && month === 12) y = baseYear - 1;
+    mo = month - 1;
+  }
+
+  // 実在しない日付（2/30 など）は無効
+  const d = new Date(y, mo, day);
+  if (d.getMonth() !== mo || d.getDate() !== day) return null;
+
+  // 行頭に残る曜日表記を取り除く（（火）/ (火) / 火曜日 など）
+  rest = rest.replace(/^\s*[（(]\s*[日月火水木金土]\s*(?:曜日?)?\s*[)）]/, '');
+  rest = rest.replace(/^\s*[日月火水木金土]曜日?/, '');
+
+  return { dateKey: kyuDateKey(d), rest };
+}
+
+// 品目テキストを分割（読点・カンマ・中黒・スラッシュ・空白で区切る）
+function kyuSplitItems(text) {
+  if (!text) return [];
+  return text
+    .split(/[、,，・･\/／|｜\s　\t]+/)
+    .map(s => s.trim().replace(/^[・･\-‐–—ー]+|[・･\-‐–—]+$/g, ''))
+    .filter(Boolean)
+    .filter(s => !/^\d+$/.test(s))                    // 数字だけ（カロリー等）
+    .filter(s => !/kcal|ｋｃａｌ|kj/i.test(s))         // 熱量表記
+    .filter(s => !/^[\d.]+\s*[gｇ]$/i.test(s))         // 重量表記
+    .filter(s => !/^(献立|こんだて|給食|きゅうしょく|メニュー|今日|本日)$/.test(s));
+}
+
+// 品目名から絵文字を推定
+function kyuGuessIcon(item, cat) {
+  const hit = KYU_ICON_HINTS.find(([, kws]) => kws.some(k => item.includes(k)));
+  if (hit) return hit[0];
+  return KYU_CATEGORY_ICONS[cat] || '🍴';
+}
+
+// 品目リストをカテゴリーへ割り当てる
+// 同じカテゴリーに複数ある場合は「・」でつなぐ
+//（空いている別カテゴリーへ回すと「スープ：からあげ」のような誤りになるため）
+function kyuCategorizeItems(items) {
+  const categories    = kyuEmptyCategories();
+  const categoryIcons = {};
+
+  items.forEach(item => {
+    const hit = KYU_CAT_KEYWORDS.find(([, kws]) => kws.some(k => item.includes(k)));
+    const cat = hit ? hit[0] : 'おかず';
+
+    if (categories[cat]) {
+      categories[cat] += '・' + item;   // 絵文字は最初の品目のものを維持
+    } else {
+      categories[cat]    = item;
+      categoryIcons[cat] = kyuGuessIcon(item, cat);
+    }
+  });
+
+  return { categories, categoryIcons };
+}
+
+// 貼り付けテキスト全体を解析して { "YYYY-MM-DD": {categories, categoryIcons} } を返す
+function kyuParsePastedText(text, baseYear, baseMonth) {
+  const result  = {};
+  const order   = [];
+  let currentKey = null;
+  let buffer     = [];
+
+  const flush = () => {
+    if (!currentKey) return;
+    const items = buffer.filter(Boolean);
+    if (items.length > 0) {
+      result[currentKey] = kyuCategorizeItems(items);
+      if (!order.includes(currentKey)) order.push(currentKey);
+    }
+    buffer = [];
+  };
+
+  text.split(/\r?\n/).forEach(rawLine => {
+    const line = rawLine.trim();
+    if (!line) return;
+
+    const parsed = kyuParseDateLine(line, baseYear, baseMonth);
+    if (parsed) {
+      flush();
+      currentKey = parsed.dateKey;
+      buffer     = kyuSplitItems(parsed.rest);
+    } else if (currentKey) {
+      // 日付行のあとに続く行は、その日の品目として追加
+      buffer = buffer.concat(kyuSplitItems(line));
+    }
+  });
+  flush();
+
+  return { result, order };
+}
+
 // 旧「曜日ごと5件」データを今週の月〜金へコピー（初回のみ・既存日付は上書きしない）
 function kyuMigrateLegacyToThisWeek() {
   if (localStorage.getItem(KYU_KEY_MIGRATED) === '1') return;
@@ -1664,6 +1811,19 @@ function initAdminKyushoku() {
   const btnCalPrev    = document.getElementById('btn-admin-cal-prev');
   const btnCalNext    = document.getElementById('btn-admin-cal-next');
   const btnCalToday   = document.getElementById('btn-admin-cal-today');
+
+  // まとめて貼り付け
+  const pasteToggle   = document.getElementById('btn-admin-paste-toggle');
+  const pasteBody     = document.getElementById('admin-paste-body');
+  const pasteInput    = document.getElementById('admin-paste-input');
+  const pasteTarget   = document.getElementById('admin-paste-target');
+  const pasteError    = document.getElementById('admin-paste-error');
+  const pastePreview  = document.getElementById('admin-paste-preview');
+  const pasteApplyWrap = document.getElementById('admin-paste-apply-wrap');
+  const btnPasteParse  = document.getElementById('btn-admin-paste-parse');
+  const btnPasteClear  = document.getElementById('btn-admin-paste-clear');
+  const btnPasteApply  = document.getElementById('btn-admin-paste-apply');
+  const btnPasteCancel = document.getElementById('btn-admin-paste-cancel');
   const editArea      = document.getElementById('admin-menu-edit');
   const editTitle     = document.getElementById('admin-menu-edit-title');
   const itemsList     = document.getElementById('admin-menu-items-list');
@@ -1681,6 +1841,9 @@ function initAdminKyushoku() {
     const todayKey = kyuDateKey(new Date());
 
     calTitle.textContent = `${calYear}年${calMonth + 1}月`;
+    if (pasteTarget) {
+      pasteTarget.textContent = `※「28日」のように日付だけの行は ${calYear}年${calMonth + 1}月 として取り込みます`;
+    }
     calGrid.innerHTML = '';
 
     const first      = new Date(calYear, calMonth, 1);
@@ -1847,10 +2010,149 @@ function initAdminKyushoku() {
     renderCalendar();
   });
 
+  // --- まとめて貼り付け ---
+  let pastedResult = null; // { dateKey: {categories, categoryIcons} }
+
+  function resetPastePreview() {
+    pastedResult = null;
+    if (pastePreview)   { pastePreview.innerHTML = ''; pastePreview.classList.add('hidden'); }
+    if (pasteApplyWrap) pasteApplyWrap.classList.add('hidden');
+    if (pasteError)     pasteError.classList.add('hidden');
+  }
+
+  function showPasteError(msg) {
+    if (!pasteError) return;
+    pasteError.textContent = msg;
+    pasteError.classList.remove('hidden');
+  }
+
+  if (pasteToggle) {
+    pasteToggle.addEventListener('click', () => {
+      const opening = pasteBody.classList.contains('hidden');
+      pasteBody.classList.toggle('hidden');
+      pasteToggle.textContent = opening ? '📋 まとめて貼り付けを閉じる' : '📋 まとめて貼り付けて登録する';
+      if (opening) {
+        renderCalendar(); // 対象月ラベルを最新化
+      } else {
+        resetPastePreview();
+      }
+    });
+  }
+
+  if (btnPasteClear) {
+    btnPasteClear.addEventListener('click', () => {
+      pasteInput.value = '';
+      resetPastePreview();
+      pasteInput.focus();
+    });
+  }
+
+  if (btnPasteCancel) {
+    btnPasteCancel.addEventListener('click', resetPastePreview);
+  }
+
+  if (btnPasteParse) {
+    btnPasteParse.addEventListener('click', () => {
+      resetPastePreview();
+
+      const text = (pasteInput.value || '').trim();
+      if (!text) {
+        showPasteError('貼り付ける文字がありません。');
+        return;
+      }
+
+      const { result, order } = kyuParsePastedText(text, calYear, calMonth);
+      if (order.length === 0) {
+        showPasteError('日付を読み取れませんでした。「7月28日」「7/28」「28日」のように、行の先頭に日付がある形にしてください。');
+        return;
+      }
+
+      pastedResult = result;
+
+      // プレビュー描画
+      const existing = kyuLoadByDate();
+      pastePreview.innerHTML = '';
+
+      const head = document.createElement('p');
+      head.className = 'admin-paste-preview-head';
+      head.textContent = `${order.length}日分を読み取りました。内容を確認してください。`;
+      pastePreview.appendChild(head);
+
+      order.sort().forEach(key => {
+        const entry     = result[key];
+        const [y, m, d] = key.split('-').map(Number);
+        const dow       = new Date(y, m - 1, d).getDay();
+
+        const card = document.createElement('div');
+        card.className = 'admin-paste-day';
+
+        const title = document.createElement('div');
+        title.className = 'admin-paste-day-title';
+        title.textContent = `${m}月${d}日（${WEEK_LABELS[dow]}）`;
+        if (existing[key]) {
+          const badge = document.createElement('span');
+          badge.className = 'admin-paste-badge';
+          badge.textContent = '上書き';
+          title.appendChild(badge);
+        }
+        card.appendChild(title);
+
+        const list = document.createElement('div');
+        list.className = 'admin-paste-day-items';
+        kyuGetItemsWithCategory(entry).forEach(p => {
+          const row = document.createElement('div');
+          row.className = 'admin-paste-day-item';
+          row.textContent = `${p.icon} ${p.cat}：${p.val}`;
+          list.appendChild(row);
+        });
+        card.appendChild(list);
+
+        pastePreview.appendChild(card);
+      });
+
+      const note = document.createElement('p');
+      note.className = 'admin-paste-note';
+      note.textContent = 'カテゴリーの振り分けは自動判定です。取り込んだあと、カレンダーの日付をタップすればいつでも直せます。';
+      pastePreview.appendChild(note);
+
+      pastePreview.classList.remove('hidden');
+      pasteApplyWrap.classList.remove('hidden');
+      pasteApplyWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  if (btnPasteApply) {
+    btnPasteApply.addEventListener('click', () => {
+      if (!pastedResult) return;
+      const keys = Object.keys(pastedResult);
+      if (keys.length === 0) return;
+
+      if (!confirm(`${keys.length}日分の献立を登録します。よろしいですか？\n（同じ日付にすでに登録がある場合は上書きされます）`)) return;
+
+      const map = kyuLoadByDate();
+      keys.forEach(k => { map[k] = pastedResult[k]; });
+      kyuSaveByDate(map);
+
+      // 取り込んだ最初の日の月へカレンダーを移動して結果を見せる
+      const first = keys.sort()[0].split('-').map(Number);
+      calYear  = first[0];
+      calMonth = first[1] - 1;
+
+      pasteInput.value = '';
+      resetPastePreview();
+      pasteBody.classList.add('hidden');
+      pasteToggle.textContent = '📋 まとめて貼り付けて登録する';
+
+      renderCalendar();
+      document.dispatchEvent(new CustomEvent('roster-updated'));
+    });
+  }
+
   // 管理画面を開くたびに再描画
   document.addEventListener('admin-opened', () => {
     editArea.classList.add('hidden');
     editingDateKey = null;
+    resetPastePreview();
     renderCalendar();
   });
 

@@ -939,6 +939,36 @@
           <h2 class="admin-section-title">🍱 給食 — 献立管理</h2>
           <p class="admin-section-desc">カレンダーの日付をタップして献立を登録します。当日の日付の献立がクイズに使われます。過去の月も ◀ ▶ で見返せます。</p>
 
+          <!-- まとめて貼り付け -->
+          <div class="admin-paste">
+            <button type="button" id="btn-admin-paste-toggle" class="admin-paste-toggle">📋 まとめて貼り付けて登録する</button>
+
+            <div class="admin-paste-body hidden" id="admin-paste-body">
+              <p class="admin-paste-desc">
+                献立表の文字をコピーして下に貼り付け、「解析する」を押してください。<br>
+                <span class="admin-paste-hint">iPadなら、写真アプリで献立表の写真を開き、文字を長押し → 選択 → コピー でも取り込めます。</span>
+              </p>
+              <textarea id="admin-paste-input" class="admin-paste-input" rows="8"
+                placeholder="例：&#10;7月28日（火）&#10;ごはん、牛乳、マーボーどうふ、バンサンスー&#10;&#10;7月29日（水）&#10;パン、牛乳、とりのからあげ、コーンスープ"></textarea>
+              <p class="admin-paste-target" id="admin-paste-target"></p>
+              <div class="admin-paste-buttons">
+                <button type="button" id="btn-admin-paste-parse" class="btn-admin-add">解析する</button>
+                <button type="button" id="btn-admin-paste-clear" class="btn-secondary">入力をクリア</button>
+              </div>
+
+              <p class="admin-paste-error hidden" id="admin-paste-error"></p>
+
+              <div class="admin-paste-preview hidden" id="admin-paste-preview">
+                <!-- 解析結果（JS で生成） -->
+              </div>
+
+              <div class="admin-paste-apply hidden" id="admin-paste-apply-wrap">
+                <button type="button" id="btn-admin-paste-apply" class="btn-admin-add">✓ この内容で取り込む</button>
+                <button type="button" id="btn-admin-paste-cancel" class="btn-secondary">やめる</button>
+              </div>
+            </div>
+          </div>
+
           <!-- 月カレンダー -->
           <div class="admin-cal">
             <div class="admin-cal-head">

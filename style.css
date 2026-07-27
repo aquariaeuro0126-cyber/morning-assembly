@@ -2073,6 +2073,168 @@ html, body {
 }
 
 /* ============================================================
+   給食：まとめて貼り付け（管理画面）
+   ============================================================ */
+.admin-paste {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.admin-paste-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #2e7d32;
+  background: #e8f5e9;
+  border: 2px dashed #43a047;
+  border-radius: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s;
+}
+
+.admin-paste-toggle:active {
+  background: #d6ecd8;
+}
+
+.admin-paste-body {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--color-bg-soft);
+  border-radius: 12px;
+}
+
+.admin-paste-body.hidden {
+  display: none;
+}
+
+.admin-paste-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.admin-paste-hint {
+  font-size: 13px;
+  color: var(--color-text-light);
+}
+
+.admin-paste-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  border: 1px solid var(--color-gray);
+  border-radius: 10px;
+  outline: none;
+  resize: vertical;
+  background: #fff;
+}
+
+.admin-paste-input:focus {
+  border-color: #43a047;
+}
+
+.admin-paste-target {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin: 6px 0 10px;
+}
+
+.admin-paste-buttons,
+.admin-paste-apply {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-paste-apply {
+  margin-top: 12px;
+}
+
+.admin-paste-apply.hidden {
+  display: none;
+}
+
+.admin-paste-error {
+  margin-top: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #c62828;
+  background: #fde8e8;
+  border-radius: 10px;
+}
+
+.admin-paste-error.hidden {
+  display: none;
+}
+
+.admin-paste-preview {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-paste-preview.hidden {
+  display: none;
+}
+
+.admin-paste-preview-head {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.admin-paste-day {
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border-left: 4px solid #43a047;
+}
+
+.admin-paste-day-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-paste-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef6c00;
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.admin-paste-day-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-paste-day-item {
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.admin-paste-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-light);
+}
+
+/* ============================================================
    給食：月カレンダー（管理画面）
    ============================================================ */
 .admin-cal {
